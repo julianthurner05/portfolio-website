@@ -2,8 +2,8 @@
   // Muss mit dem Projektnamen in Cloudflare übereinstimmen
   "name": "portfolio-website",
   "compatibility_date": "2026-10-01",
-  // Alles in ./public wird unverändert als statische Seite ausgeliefert
+  // Der ganze Ordner wird als statische Seite ausgeliefert, außer was in .assetsignore steht
   "assets": {
-    "directory": "./public"
+    "directory": "."
   }
 }
