@@ -5,5 +5,7 @@
   // Der ganze Ordner wird als statische Seite ausgeliefert, außer was in .assetsignore steht
   "assets": {
     "directory": "."
-  }
+  },
+  // Pflicht für Vorschau-Builds von Branches außer main (npx wrangler preview)
+  "previews": {}
 }
