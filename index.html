@@ -82,8 +82,8 @@
 				height: 100%;
 				overflow: hidden;
 				margin: 0;
-				display: grid;
-				place-items: center;
+				display: flex;
+				flex-direction: column;
 				padding: 1.5rem;
 				background: var(--white);
 				color: var(--black);
@@ -93,19 +93,157 @@
 				-moz-osx-font-smoothing: grayscale;
 				text-rendering: optimizeLegibility;
 			}
-			p {
-				margin: 0;
-				font-size: 0.875rem;
-				text-align: center;
+			.hero {
+				flex: 1;
+				display: flex;
+				align-items: center;
+				min-height: 0;
 			}
-			.white {
-				color: var(--white);
+
+			/* Glasbruch: das Skript legt mehrere Kopien des Texts übereinander,
+			   schneidet jede auf eine Scherbe zu und verschiebt sie leicht. */
+			.glass {
+				position: relative;
+				width: fit-content;
+				margin: 0;
+				/* füllt die Breite, wird aber nie höher als das Fenster */
+				font-size: min(calc((100vw - 3rem) * 0.314), calc((100svh - 3rem) / 1.8));
+				font-weight: 500;
+				line-height: 0.86;
+				letter-spacing: -0.045em;
+			}
+			.glass-base,
+			.glass-shard {
+				display: block;
+			}
+			.glass-shard {
+				position: absolute;
+				inset: 0;
+			}
+			.glass.is-shattered .glass-base {
+				color: transparent;
+			}
+			.glass-cracks {
+				position: absolute;
+				inset: 0;
+				overflow: visible;
+				pointer-events: none;
+			}
+			.glass-cracks path {
+				fill: none;
+				stroke: var(--white);
+				stroke-linecap: round;
 			}
 		</style>
 	</head>
 	<body>
-		<main>
-			<p>Hier entsteht <span class="white">etwas</span> Neues.</p>
+		<main class="hero">
+			<h1 class="glass" data-seed="7">
+				<span class="glass-base">Julian<br />Thurner</span>
+			</h1>
 		</main>
+
+		<script>
+			const glass = document.querySelector(".glass");
+			const base = glass.querySelector(".glass-base");
+			const SVG = "http://www.w3.org/2000/svg";
+
+			// Zufall mit festem Startwert, damit das Muster bei jedem Laden gleich aussieht
+			function seeded(seed) {
+				return () => {
+					seed = (seed + 0x6d2b79f5) | 0;
+					let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+					t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+					return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+				};
+			}
+
+			function shatter() {
+				glass.querySelectorAll(".glass-shard, .glass-cracks").forEach((el) => el.remove());
+
+				const rand = seeded(Number(glass.dataset.seed) || 1);
+				const between = (a, b) => a + rand() * (b - a);
+				const w = glass.offsetWidth;
+				const h = glass.offsetHeight;
+				const fontSize = parseFloat(getComputedStyle(glass).fontSize);
+
+				// Einschlagpunkt, von dem aus Risse strahlenförmig und in Ringen laufen
+				const cx = w * 0.62;
+				const cy = h * 0.46;
+				const unit = Math.hypot(w, h) / 2;
+				const reach = Math.hypot(Math.max(cx, w - cx), Math.max(cy, h - cy)) * 1.5;
+
+				const rays = 7;
+				const turn = between(0, Math.PI * 2);
+				const angles = Array.from({ length: rays }, (_, i) =>
+					turn + ((i + between(-0.3, 0.3)) / rays) * Math.PI * 2
+				);
+				const rings = [0.42];
+
+				// points[i][j]: Punkt auf Strahl i in Ring j (Ring 0 = Einschlag, letzter = außerhalb)
+				const points = angles.map((a) => {
+					const dir = [Math.cos(a), Math.sin(a)];
+					const along = (r) => [cx + dir[0] * r, cy + dir[1] * r];
+					return [[cx, cy], ...rings.map((r) => along(r * unit * between(0.75, 1.25))), along(reach)];
+				});
+
+				const shards = [];
+				for (let i = 0; i < rays; i++) {
+					const a = points[i];
+					const b = points[(i + 1) % rays];
+					shards.push([a[0], a[1], b[1]]);
+					for (let j = 1; j < a.length - 1; j++) {
+						shards.push([a[j], a[j + 1], b[j + 1], b[j]]);
+					}
+				}
+
+				const cracks = document.createElementNS(SVG, "svg");
+				cracks.setAttribute("class", "glass-cracks");
+				cracks.setAttribute("viewBox", `0 0 ${w} ${h}`);
+				cracks.setAttribute("width", w);
+				cracks.setAttribute("height", h);
+				cracks.setAttribute("aria-hidden", "true");
+				const path = document.createElementNS(SVG, "path");
+				path.setAttribute("stroke-width", Math.max(1, fontSize * 0.005));
+				let d = "";
+
+				const px = (p) => `${p[0].toFixed(1)}px ${p[1].toFixed(1)}px`;
+				for (const shard of shards) {
+					const gx = shard.reduce((s, p) => s + p[0], 0) / shard.length;
+					const gy = shard.reduce((s, p) => s + p[1], 0) / shard.length;
+					// Scherben nahe am Einschlag sind stärker verschoben
+					const near = 1 - Math.min(1, Math.hypot(gx - cx, gy - cy) / unit);
+					const amp = 0.01 + 0.03 * near;
+
+					const piece = document.createElement("span");
+					piece.className = "glass-shard";
+					piece.setAttribute("aria-hidden", "true");
+					piece.innerHTML = base.innerHTML;
+					piece.style.clipPath = `polygon(${shard.map(px).join(", ")})`;
+					piece.style.transformOrigin = `${gx.toFixed(1)}px ${gy.toFixed(1)}px`;
+					piece.style.transform =
+						`translate(${(between(-1, 1) * amp).toFixed(4)}em, ${(between(-1, 1) * amp).toFixed(4)}em) ` +
+						`rotate(${between(-0.5, 0.5).toFixed(3)}deg) scale(${(1 + between(0, 0.012)).toFixed(4)})`;
+					glass.appendChild(piece);
+
+					shard.forEach((p, k) => {
+						const q = shard[(k + 1) % shard.length];
+						d += `M${p[0].toFixed(1)} ${p[1].toFixed(1)}L${q[0].toFixed(1)} ${q[1].toFixed(1)}`;
+					});
+				}
+
+				path.setAttribute("d", d);
+				cracks.appendChild(path);
+				glass.appendChild(cracks);
+				glass.classList.add("is-shattered");
+			}
+
+			let frame;
+			new ResizeObserver(() => {
+				cancelAnimationFrame(frame);
+				frame = requestAnimationFrame(shatter);
+			}).observe(glass);
+			document.fonts.ready.then(shatter);
+		</script>
 	</body>
 </html>
