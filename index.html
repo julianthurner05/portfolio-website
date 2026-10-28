@@ -263,7 +263,10 @@
 				const zoom = 0.95;
 				let tx = 0, ty = 0, cx = 0, cy = 0, tStr = 0, cStr = 0;
 				let tvx = 0, tvy = 0, cvx = 0, cvy = 0;
+				// Mauseinfluss vorerst abgeschaltet: die Masse bewegt sich nur von selbst
+				const MOUSE_INFLUENCE = false;
 				addEventListener("pointermove", (e) => {
+					if (!MOUSE_INFLUENCE) return;
 					const nx = ((e.clientX - canvas.clientWidth / 2) / canvas.clientHeight) * zoom;
 					const ny = ((canvas.clientHeight / 2 - e.clientY) / canvas.clientHeight) * zoom;
 					tvx += (nx - tx) * 4;
