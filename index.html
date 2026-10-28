@@ -90,342 +90,168 @@
 				-moz-osx-font-smoothing: grayscale;
 				text-rendering: optimizeLegibility;
 			}
-			/* Bühne mit Perspektive: alles darin neigt sich zur Maus */
-			.stage {
+			/* Die weiße Masse: ein Shader rechnet pro Pixel eine weiche,
+			   sich verformende Oberfläche, nur aus Licht und Schatten */
+			#mass {
+				position: fixed;
+				inset: 0;
+				width: 100%;
 				height: 100%;
-				perspective: 1100px;
-			}
-			.scene {
-				box-sizing: border-box;
-				height: 100%;
-				padding: 1.5rem;
-				display: flex;
-				flex-direction: column;
-				align-items: center;
-				justify-content: center;
-				gap: clamp(1.5rem, 6svh, 4rem);
-				position: relative;
-				transform-style: preserve-3d;
-				will-change: transform;
-			}
-
-			/* Weiche Masse: weiße Blasen, nur über Schatten sichtbar,
-			   liegen räumlich hinter dem Inhalt und verformen sich langsam */
-			.mass {
-				position: absolute;
-				inset: -12%;
-				transform: translateZ(-90px);
-				transform-style: preserve-3d;
-				pointer-events: none;
-			}
-			.blob {
-				position: absolute;
-				background: var(--white);
-				box-shadow:
-					0 30px 80px rgba(0, 0, 0, 0.1),
-					0 4px 18px rgba(0, 0, 0, 0.05),
-					inset 0 -24px 48px rgba(0, 0, 0, 0.04);
-				animation: breathe ease-in-out infinite alternate;
-			}
-			.blob:nth-child(1) { width: 52vmin; height: 46vmin; left: 4%; top: 6%; animation-duration: 21s; }
-			.blob:nth-child(2) { width: 38vmin; height: 38vmin; right: 8%; top: 16%; animation-duration: 17s; animation-delay: -6s; transform: translateZ(-40px); }
-			.blob:nth-child(3) { width: 60vmin; height: 48vmin; right: 2%; bottom: -4%; animation-duration: 26s; animation-delay: -12s; }
-			.blob:nth-child(4) { width: 30vmin; height: 30vmin; left: 14%; bottom: 8%; animation-duration: 14s; animation-delay: -3s; transform: translateZ(-130px); }
-			@keyframes breathe {
-				0% { border-radius: 44% 56% 58% 42% / 50% 44% 56% 50%; scale: 1; translate: 0 0; }
-				50% { border-radius: 58% 42% 46% 54% / 44% 58% 42% 56%; scale: 1.05; translate: 1.5% -2%; }
-				100% { border-radius: 50% 50% 40% 60% / 58% 46% 54% 42%; scale: 0.97; translate: -1.5% 1.5%; }
-			}
-
-			.hero {
-				position: relative;
-				transform: translateZ(40px);
-				transform-style: preserve-3d;
-			}
-
-			/* Buttons, die aus dem Weiß herauswachsen: Licht von oben,
-			   weicher Wurfschatten, beim Druck sinken sie hinein */
-			.dock {
-				display: flex;
-				align-items: center;
-				flex-wrap: wrap;
-				justify-content: center;
-				max-width: 100%;
-				gap: clamp(0.6rem, 2vw, 1.25rem);
-				transform: translateZ(80px);
-				transform-style: preserve-3d;
-			}
-			.soft-btn {
-				appearance: none;
-				border: 0;
-				cursor: pointer;
-				font: inherit;
-				font-size: clamp(0.85rem, 1.1vw + 0.6rem, 1.05rem);
-				font-weight: 500;
-				color: var(--black);
-				padding: 0.85rem 1.5rem;
-				border-radius: 999px;
-				background: linear-gradient(150deg, #ffffff 20%, #f0f0f0);
-				box-shadow:
-					0 1px 1px rgba(0, 0, 0, 0.05),
-					0 2px 6px rgba(0, 0, 0, 0.06),
-					0 12px 28px rgba(0, 0, 0, 0.12),
-					inset 0 1px 0 #ffffff;
-				transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-				transition: transform 0.15s ease, box-shadow 0.25s ease;
-			}
-			.soft-btn:hover {
-				transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(-4px);
-				box-shadow:
-					0 2px 2px rgba(0, 0, 0, 0.03),
-					0 6px 14px rgba(0, 0, 0, 0.07),
-					0 26px 60px rgba(0, 0, 0, 0.17),
-					inset 0 1px 0 #ffffff;
-			}
-			.soft-btn:active {
-				transform: translateY(1px) scale(0.985);
-				box-shadow:
-					inset 0 3px 8px rgba(0, 0, 0, 0.14),
-					inset 0 -1px 2px rgba(255, 255, 255, 0.8),
-					0 2px 8px rgba(0, 0, 0, 0.06);
-				transition-duration: 0.05s;
-			}
-			.soft-btn:focus-visible {
-				outline: 2px solid var(--black);
-				outline-offset: 3px;
-			}
-			.play {
-				width: 3.2rem;
-				height: 3.2rem;
-				padding: 0;
-				display: grid;
-				place-items: center;
-			}
-			.play::before {
-				content: "";
-				width: 0;
-				height: 0;
-				border-left: 0.75rem solid var(--black);
-				border-top: 0.45rem solid transparent;
-				border-bottom: 0.45rem solid transparent;
-				margin-left: 0.15rem;
-			}
-
-			@media (max-width: 480px) {
-				.dock {
-					gap: 0.5rem;
-				}
-				.soft-btn {
-					padding: 0.75rem 1.05rem;
-				}
-			}
-
-			@media (prefers-reduced-motion: reduce) {
-				.blob {
-					animation: none;
-				}
-			}
-
-			/* Glasbruch: das Skript legt mehrere Kopien des Texts übereinander,
-			   schneidet jede auf eine Scherbe zu und verschiebt sie leicht. */
-			.glass {
-				position: relative;
-				width: fit-content;
-				margin: 0;
-				/* füllt die Breite, lässt aber Platz für die Button-Reihe */
-				/* etwas kleiner als die volle Breite: die 3D-Neigung braucht Luft an den Rändern */
-				font-size: min(calc((100vw - 3rem) * 0.295), calc((100svh - 16rem) / 1.8));
-				transform-style: preserve-3d;
-				font-weight: 500;
-				line-height: 0.86;
-				letter-spacing: -0.045em;
-			}
-			.glass-base,
-			.glass-shard {
 				display: block;
-			}
-			.glass-shard {
-				position: absolute;
-				inset: 0;
-			}
-			.glass.is-shattered .glass-base {
-				color: transparent;
-			}
-			.glass-cracks {
-				position: absolute;
-				inset: 0;
-				overflow: visible;
-				pointer-events: none;
-			}
-			.glass-cracks path {
-				fill: none;
-				stroke: var(--white);
-				stroke-linecap: round;
 			}
 		</style>
 	</head>
 	<body>
-		<div class="stage">
-			<div class="scene">
-				<div class="mass" aria-hidden="true">
-					<span class="blob"></span>
-					<span class="blob"></span>
-					<span class="blob"></span>
-					<span class="blob"></span>
-				</div>
-				<main class="hero">
-					<h1 class="glass" data-seed="7">
-						<span class="glass-base">Julian<br />Thurner</span>
-					</h1>
-				</main>
-				<nav class="dock" aria-label="Navigation (Platzhalter)">
-					<button class="soft-btn" type="button">Projekte</button>
-					<button class="soft-btn" type="button">Info</button>
-					<button class="soft-btn" type="button">Kontakt</button>
-					<button class="soft-btn play" type="button" aria-label="Ton abspielen"></button>
-				</nav>
-			</div>
-		</div>
+		<canvas id="mass" aria-hidden="true"></canvas>
 
 		<script>
-			const glass = document.querySelector(".glass");
-			const base = glass.querySelector(".glass-base");
-			const SVG = "http://www.w3.org/2000/svg";
-
-			// Zufall mit festem Startwert, damit das Muster bei jedem Laden gleich aussieht
-			function seeded(seed) {
-				return () => {
-					seed = (seed + 0x6d2b79f5) | 0;
-					let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-					t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-					return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-				};
-			}
-
-			function shatter() {
-				glass.querySelectorAll(".glass-shard, .glass-cracks").forEach((el) => el.remove());
-
-				const rand = seeded(Number(glass.dataset.seed) || 1);
-				const between = (a, b) => a + rand() * (b - a);
-				const w = glass.offsetWidth;
-				const h = glass.offsetHeight;
-				const fontSize = parseFloat(getComputedStyle(glass).fontSize);
-
-				// Einschlagpunkt, von dem aus Risse strahlenförmig und in Ringen laufen
-				const cx = w * 0.62;
-				const cy = h * 0.46;
-				const unit = Math.hypot(w, h) / 2;
-				const reach = Math.hypot(Math.max(cx, w - cx), Math.max(cy, h - cy)) * 1.5;
-
-				const rays = 7;
-				const turn = between(0, Math.PI * 2);
-				const angles = Array.from({ length: rays }, (_, i) =>
-					turn + ((i + between(-0.3, 0.3)) / rays) * Math.PI * 2
-				);
-				const rings = [0.42];
-
-				// points[i][j]: Punkt auf Strahl i in Ring j (Ring 0 = Einschlag, letzter = außerhalb)
-				const points = angles.map((a) => {
-					const dir = [Math.cos(a), Math.sin(a)];
-					const along = (r) => [cx + dir[0] * r, cy + dir[1] * r];
-					return [[cx, cy], ...rings.map((r) => along(r * unit * between(0.75, 1.25))), along(reach)];
-				});
-
-				const shards = [];
-				for (let i = 0; i < rays; i++) {
-					const a = points[i];
-					const b = points[(i + 1) % rays];
-					shards.push([a[0], a[1], b[1]]);
-					for (let j = 1; j < a.length - 1; j++) {
-						shards.push([a[j], a[j + 1], b[j + 1], b[j]]);
-					}
-				}
-
-				const cracks = document.createElementNS(SVG, "svg");
-				cracks.setAttribute("class", "glass-cracks");
-				cracks.setAttribute("viewBox", `0 0 ${w} ${h}`);
-				cracks.setAttribute("width", w);
-				cracks.setAttribute("height", h);
-				cracks.setAttribute("aria-hidden", "true");
-				const path = document.createElementNS(SVG, "path");
-				path.setAttribute("stroke-width", Math.max(1, fontSize * 0.005));
-				let d = "";
-
-				const px = (p) => `${p[0].toFixed(1)}px ${p[1].toFixed(1)}px`;
-				for (const shard of shards) {
-					const gx = shard.reduce((s, p) => s + p[0], 0) / shard.length;
-					const gy = shard.reduce((s, p) => s + p[1], 0) / shard.length;
-					// Scherben nahe am Einschlag sind stärker verschoben
-					const near = 1 - Math.min(1, Math.hypot(gx - cx, gy - cy) / unit);
-					const amp = 0.01 + 0.03 * near;
-
-					const piece = document.createElement("span");
-					piece.className = "glass-shard";
-					piece.setAttribute("aria-hidden", "true");
-					piece.innerHTML = base.innerHTML;
-					piece.style.clipPath = `polygon(${shard.map(px).join(", ")})`;
-					piece.style.transformOrigin = `${gx.toFixed(1)}px ${gy.toFixed(1)}px`;
-					piece.style.transform =
-						`translate(${(between(-1, 1) * amp).toFixed(4)}em, ${(between(-1, 1) * amp).toFixed(4)}em) ` +
-						`translateZ(${(between(2, 9) + near * between(0, 26)).toFixed(1)}px) ` +
-						`rotate(${between(-0.5, 0.5).toFixed(3)}deg) scale(${(1 + between(0, 0.012)).toFixed(4)})`;
-					glass.appendChild(piece);
-
-					shard.forEach((p, k) => {
-						const q = shard[(k + 1) % shard.length];
-						d += `M${p[0].toFixed(1)} ${p[1].toFixed(1)}L${q[0].toFixed(1)} ${q[1].toFixed(1)}`;
-					});
-				}
-
-				path.setAttribute("d", d);
-				cracks.appendChild(path);
-				glass.appendChild(cracks);
-				glass.classList.add("is-shattered");
-			}
-
-			let frame;
-			new ResizeObserver(() => {
-				cancelAnimationFrame(frame);
-				frame = requestAnimationFrame(shatter);
-			}).observe(glass);
-			document.fonts.ready.then(shatter);
-
-			// 3D-Neigung der Szene: folgt der Maus, wackelt ohne Maus langsam von selbst
-			const scene = document.querySelector(".scene");
+			const canvas = document.getElementById("mass");
+			const gl = canvas.getContext("webgl", { antialias: false, alpha: false });
 			const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-			if (!reduceMotion) {
-				let targetX = 0, targetY = 0, curX = 0, curY = 0, pointerActive = false;
-				addEventListener("pointermove", (e) => {
-					pointerActive = true;
-					targetX = e.clientX / innerWidth - 0.5;
-					targetY = e.clientY / innerHeight - 0.5;
-				});
-				document.documentElement.addEventListener("pointerleave", () => (pointerActive = false));
-				const start = performance.now();
-				(function tilt(now) {
-					let gx = targetX, gy = targetY;
-					if (!pointerActive) {
-						const t = (now - start) / 1000;
-						gx = Math.sin(t * 0.33) * 0.2;
-						gy = Math.cos(t * 0.21) * 0.16;
-					}
-					curX += (gx - curX) * 0.05;
-					curY += (gy - curY) * 0.05;
-					scene.style.transform = `rotateX(${(-curY * 7).toFixed(3)}deg) rotateY(${(curX * 10).toFixed(3)}deg)`;
-					requestAnimationFrame(tilt);
-				})(start);
 
-				// Buttons kippen zusätzlich leicht zur Maus
-				for (const btn of document.querySelectorAll(".soft-btn")) {
-					btn.addEventListener("pointermove", (e) => {
-						const r = btn.getBoundingClientRect();
-						btn.style.setProperty("--ry", `${((e.clientX - r.left) / r.width - 0.5) * 9}deg`);
-						btn.style.setProperty("--rx", `${(0.5 - (e.clientY - r.top) / r.height) * 9}deg`);
-					});
-					btn.addEventListener("pointerleave", () => {
-						btn.style.setProperty("--rx", "0deg");
-						btn.style.setProperty("--ry", "0deg");
-					});
+			if (gl) {
+				const VERT = `
+					attribute vec2 a;
+					void main() { gl_Position = vec4(a, 0.0, 1.0); }
+				`;
+
+				// Höhenfeld aus mehrfach ineinander verschobenem Rauschen (Domain Warping),
+				// beleuchtet wie ein Relief: Licht von oben links, Senken werden grau
+				const FRAG = `
+					precision highp float;
+					uniform vec2 u_res;
+					uniform float u_time;
+					uniform vec2 u_mouse;
+					uniform float u_mstr;
+
+					vec2 hash(vec2 p) {
+						p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
+						return -1.0 + 2.0 * fract(sin(p) * 43758.5453123);
+					}
+					float noise(in vec2 p) {
+						vec2 i = floor(p), f = fract(p);
+						vec2 u = f * f * (3.0 - 2.0 * f);
+						return mix(
+							mix(dot(hash(i), f), dot(hash(i + vec2(1.0, 0.0)), f - vec2(1.0, 0.0)), u.x),
+							mix(dot(hash(i + vec2(0.0, 1.0)), f - vec2(0.0, 1.0)), dot(hash(i + vec2(1.0, 1.0)), f - vec2(1.0, 1.0)), u.x),
+							u.y);
+					}
+					float fbm(vec2 p) {
+						float v = 0.0, a = 0.5;
+						mat2 r = mat2(0.8, -0.6, 0.6, 0.8);
+						for (int i = 0; i < 4; i++) {
+							v += a * noise(p);
+							p = r * p * 2.03;
+							a *= 0.5;
+						}
+						return v;
+					}
+
+					float height(in vec2 p) {
+						float t = u_time * 0.05;
+						vec2 q = vec2(
+							fbm(p + t * vec2(0.10, 0.06)),
+							fbm(p + vec2(5.2, 1.3) - t * vec2(0.07, 0.09)));
+						vec2 r = vec2(
+							fbm(p + 1.7 * q + vec2(1.7, 9.2) + t * vec2(0.12, 0.05)),
+							fbm(p + 1.7 * q + vec2(8.3, 2.8) - t * vec2(0.06, 0.11)));
+						float h = fbm(p + 1.4 * r);
+						h += 0.1 * fbm(p * 2.4 - t * 0.2);
+						vec2 dm = p - u_mouse;
+						h -= u_mstr * 0.4 * exp(-dot(dm, dm) * 14.0);
+						return h;
+					}
+
+					void main() {
+						float zoom = 1.4;
+						vec2 p = (gl_FragCoord.xy - 0.5 * u_res) / u_res.y * zoom;
+						float e = 3.0 * zoom / u_res.y;
+
+						float h0 = height(p);
+						float hx = height(p + vec2(e, 0.0));
+						float hy = height(p + vec2(0.0, e));
+						vec3 n = normalize(vec3((h0 - hx) / e * 0.085, (h0 - hy) / e * 0.085, 1.0));
+
+						vec3 L = normalize(vec3(-0.4, 0.55, 0.75));
+						float wrap = clamp(dot(n, L), 0.0, 1.0) * 0.5 + 0.5;
+						vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
+						float spec = pow(clamp(dot(n, H), 0.0, 1.0), 64.0);
+
+						float col = mix(0.78, 1.0, wrap);
+						col += spec * 0.07;
+						col *= 1.0 - 0.06 * smoothstep(0.15, -0.55, h0);
+
+						// Dithering gegen Streifen in den hellen Verläufen
+						float dith = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+						col += (dith - 0.5) / 255.0 * 2.0;
+
+						gl_FragColor = vec4(vec3(col), 1.0);
+					}
+				`;
+
+				function compile(type, src) {
+					const s = gl.createShader(type);
+					gl.shaderSource(s, src);
+					gl.compileShader(s);
+					if (!gl.getShaderParameter(s, gl.COMPILE_STATUS))
+						console.error(gl.getShaderInfoLog(s));
+					return s;
+				}
+				const prog = gl.createProgram();
+				gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+				gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
+				gl.linkProgram(prog);
+				gl.useProgram(prog);
+
+				gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+				const loc = gl.getAttribLocation(prog, "a");
+				gl.enableVertexAttribArray(loc);
+				gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+				const U = (n) => gl.getUniformLocation(prog, n);
+				const uRes = U("u_res"), uTime = U("u_time"), uMouse = U("u_mouse"), uMstr = U("u_mstr");
+
+				// Renderauflösung leicht reduziert: schneller, und die weichen
+				// Verläufe vertragen das Hochskalieren problemlos
+				const SCALE = 0.6;
+				function resize() {
+					const dpr = Math.min(devicePixelRatio || 1, 2) * SCALE;
+					canvas.width = Math.round(canvas.clientWidth * dpr);
+					canvas.height = Math.round(canvas.clientHeight * dpr);
+					gl.viewport(0, 0, canvas.width, canvas.height);
+				}
+				resize();
+				addEventListener("resize", resize);
+
+				// Zeiger träge nachführen: die Masse gibt unter ihm weich nach
+				const zoom = 1.4;
+				let tx = 0, ty = 0, cx = 0, cy = 0, tStr = 0, cStr = 0;
+				addEventListener("pointermove", (e) => {
+					tx = ((e.clientX - canvas.clientWidth / 2) / canvas.clientHeight) * zoom;
+					ty = ((canvas.clientHeight / 2 - e.clientY) / canvas.clientHeight) * zoom;
+					tStr = 1;
+				});
+				document.documentElement.addEventListener("pointerleave", () => (tStr = 0));
+
+				function draw(now) {
+					cx += (tx - cx) * 0.045;
+					cy += (ty - cy) * 0.045;
+					cStr += (tStr - cStr) * 0.03;
+					gl.uniform2f(uRes, canvas.width, canvas.height);
+					gl.uniform1f(uTime, now / 1000);
+					gl.uniform2f(uMouse, cx, cy);
+					gl.uniform1f(uMstr, cStr);
+					gl.drawArrays(gl.TRIANGLES, 0, 3);
+				}
+
+				if (reduceMotion) {
+					draw(0);
+				} else {
+					(function loop(now) {
+						draw(now);
+						requestAnimationFrame(loop);
+					})(0);
 				}
 			}
 		</script>
