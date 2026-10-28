@@ -152,7 +152,6 @@
 					uniform vec2 u_mouse;
 					uniform vec2 u_mvel;
 					uniform float u_mstr;
-					uniform sampler2D u_text;
 
 					vec2 hash(vec2 p) {
 						p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
@@ -193,10 +192,6 @@
 							fbm(p + 1.15 * q + vec2(8.3, 2.8) - t * vec2(0.06, 0.11)));
 						float h = fbm(p + r);
 						h += 0.05 * fbm(p * 2.1 - t * 0.15);
-						// Schrift als Relief aus derselben Masse: die Maske wird an der
-						// verformten Position gelesen, dadurch beult sie unterm Zeiger mit
-						vec2 uv = (p + 0.04 * r) * vec2(u_res.y / u_res.x, 1.0) / ZOOM + 0.5;
-						h += texture2D(u_text, uv).r * 0.42;
 						// breite, flache Wölbung unterm Zeiger
 						h += 0.08 * u_mstr * exp(-dot(dm, dm) * 2.5);
 						return h;
@@ -209,16 +204,16 @@
 						float h0 = height(p);
 						float hx = height(p + vec2(e, 0.0));
 						float hy = height(p + vec2(0.0, e));
-						vec3 n = normalize(vec3((h0 - hx) / e * 0.14, (h0 - hy) / e * 0.14, 1.0));
+						vec3 n = normalize(vec3((h0 - hx) / e * 0.16, (h0 - hy) / e * 0.16, 1.0));
 
 						vec3 L = normalize(vec3(-0.4, 0.55, 0.75));
 						float wrap = clamp(dot(n, L), 0.0, 1.0) * 0.5 + 0.5;
 						vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
 						float spec = pow(clamp(dot(n, H), 0.0, 1.0), 48.0);
 
-						float col = mix(0.81, 1.0, wrap);
+						float col = mix(0.8, 1.0, wrap);
 						col += spec * 0.05;
-						col *= 1.0 - 0.04 * smoothstep(0.15, -0.55, h0);
+						col *= 1.0 - 0.06 * smoothstep(0.15, -0.55, h0);
 
 						// Dithering gegen Streifen in den hellen Verläufen
 						float dith = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
@@ -251,38 +246,6 @@
 				const U = (n) => gl.getUniformLocation(prog, n);
 				const uRes = U("u_res"), uTime = U("u_time"), uMouse = U("u_mouse"), uMvel = U("u_mvel"), uMstr = U("u_mstr");
 
-				// Der Name wird unscharf in eine 2D-Leinwand gezeichnet und als
-				// Textur hochgeladen; der Shader prägt ihn als Relief in die Masse
-				const txt = document.createElement("canvas");
-				const tctx = txt.getContext("2d");
-				const tex = gl.createTexture();
-				gl.activeTexture(gl.TEXTURE0);
-				gl.bindTexture(gl.TEXTURE_2D, tex);
-				gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-				gl.uniform1i(U("u_text"), 0);
-				function drawText() {
-					const w = (txt.width = canvas.width);
-					const h = (txt.height = canvas.height);
-					tctx.fillStyle = "#000";
-					tctx.fillRect(0, 0, w, h);
-					tctx.fillStyle = "#fff";
-					tctx.textAlign = "center";
-					tctx.textBaseline = "middle";
-					let fs = h * 0.2;
-					tctx.font = `500 ${fs}px "Neue Montreal", ui-sans-serif, sans-serif`;
-					fs = Math.min(fs * ((w * 0.84) / tctx.measureText("Thurner").width), h * 0.3);
-					tctx.font = `500 ${fs}px "Neue Montreal", ui-sans-serif, sans-serif`;
-					if ("filter" in tctx) tctx.filter = `blur(${(fs * 0.022).toFixed(1)}px)`;
-					tctx.fillText("Julian", w / 2, h / 2 - fs * 0.52);
-					tctx.fillText("Thurner", w / 2, h / 2 + fs * 0.52);
-					tctx.filter = "none";
-					gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, gl.LUMINANCE, gl.UNSIGNED_BYTE, txt);
-				}
-
 				// Renderauflösung leicht reduziert: schneller, und die weichen
 				// Verläufe vertragen das Hochskalieren problemlos
 				const SCALE = 0.6;
@@ -291,14 +254,9 @@
 					canvas.width = Math.round(canvas.clientWidth * dpr);
 					canvas.height = Math.round(canvas.clientHeight * dpr);
 					gl.viewport(0, 0, canvas.width, canvas.height);
-					drawText();
 				}
 				resize();
 				addEventListener("resize", resize);
-				document.fonts.load('500 100px "Neue Montreal"').then(() => {
-					drawText();
-					if (reduceMotion) draw(0);
-				});
 
 				// Zeiger träge nachführen; aus seiner Bewegung entsteht ein
 				// Geschwindigkeitsvektor, der die Masse mitzieht
