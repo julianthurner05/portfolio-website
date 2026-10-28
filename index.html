@@ -82,9 +82,6 @@
 				height: 100%;
 				overflow: hidden;
 				margin: 0;
-				display: flex;
-				flex-direction: column;
-				padding: 1.5rem;
 				background: var(--white);
 				color: var(--black);
 				font-family: "Neue Montreal", ui-sans-serif, system-ui, sans-serif;
@@ -93,11 +90,140 @@
 				-moz-osx-font-smoothing: grayscale;
 				text-rendering: optimizeLegibility;
 			}
+			/* Bühne mit Perspektive: alles darin neigt sich zur Maus */
+			.stage {
+				height: 100%;
+				perspective: 1100px;
+			}
+			.scene {
+				box-sizing: border-box;
+				height: 100%;
+				padding: 1.5rem;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				gap: clamp(1.5rem, 6svh, 4rem);
+				position: relative;
+				transform-style: preserve-3d;
+				will-change: transform;
+			}
+
+			/* Weiche Masse: weiße Blasen, nur über Schatten sichtbar,
+			   liegen räumlich hinter dem Inhalt und verformen sich langsam */
+			.mass {
+				position: absolute;
+				inset: -12%;
+				transform: translateZ(-90px);
+				transform-style: preserve-3d;
+				pointer-events: none;
+			}
+			.blob {
+				position: absolute;
+				background: var(--white);
+				box-shadow:
+					0 30px 80px rgba(0, 0, 0, 0.1),
+					0 4px 18px rgba(0, 0, 0, 0.05),
+					inset 0 -24px 48px rgba(0, 0, 0, 0.04);
+				animation: breathe ease-in-out infinite alternate;
+			}
+			.blob:nth-child(1) { width: 52vmin; height: 46vmin; left: 4%; top: 6%; animation-duration: 21s; }
+			.blob:nth-child(2) { width: 38vmin; height: 38vmin; right: 8%; top: 16%; animation-duration: 17s; animation-delay: -6s; transform: translateZ(-40px); }
+			.blob:nth-child(3) { width: 60vmin; height: 48vmin; right: 2%; bottom: -4%; animation-duration: 26s; animation-delay: -12s; }
+			.blob:nth-child(4) { width: 30vmin; height: 30vmin; left: 14%; bottom: 8%; animation-duration: 14s; animation-delay: -3s; transform: translateZ(-130px); }
+			@keyframes breathe {
+				0% { border-radius: 44% 56% 58% 42% / 50% 44% 56% 50%; scale: 1; translate: 0 0; }
+				50% { border-radius: 58% 42% 46% 54% / 44% 58% 42% 56%; scale: 1.05; translate: 1.5% -2%; }
+				100% { border-radius: 50% 50% 40% 60% / 58% 46% 54% 42%; scale: 0.97; translate: -1.5% 1.5%; }
+			}
+
 			.hero {
-				flex: 1;
+				position: relative;
+				transform: translateZ(40px);
+				transform-style: preserve-3d;
+			}
+
+			/* Buttons, die aus dem Weiß herauswachsen: Licht von oben,
+			   weicher Wurfschatten, beim Druck sinken sie hinein */
+			.dock {
 				display: flex;
 				align-items: center;
-				min-height: 0;
+				flex-wrap: wrap;
+				justify-content: center;
+				max-width: 100%;
+				gap: clamp(0.6rem, 2vw, 1.25rem);
+				transform: translateZ(80px);
+				transform-style: preserve-3d;
+			}
+			.soft-btn {
+				appearance: none;
+				border: 0;
+				cursor: pointer;
+				font: inherit;
+				font-size: clamp(0.85rem, 1.1vw + 0.6rem, 1.05rem);
+				font-weight: 500;
+				color: var(--black);
+				padding: 0.85rem 1.5rem;
+				border-radius: 999px;
+				background: linear-gradient(150deg, #ffffff 20%, #f0f0f0);
+				box-shadow:
+					0 1px 1px rgba(0, 0, 0, 0.05),
+					0 2px 6px rgba(0, 0, 0, 0.06),
+					0 12px 28px rgba(0, 0, 0, 0.12),
+					inset 0 1px 0 #ffffff;
+				transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+				transition: transform 0.15s ease, box-shadow 0.25s ease;
+			}
+			.soft-btn:hover {
+				transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(-4px);
+				box-shadow:
+					0 2px 2px rgba(0, 0, 0, 0.03),
+					0 6px 14px rgba(0, 0, 0, 0.07),
+					0 26px 60px rgba(0, 0, 0, 0.17),
+					inset 0 1px 0 #ffffff;
+			}
+			.soft-btn:active {
+				transform: translateY(1px) scale(0.985);
+				box-shadow:
+					inset 0 3px 8px rgba(0, 0, 0, 0.14),
+					inset 0 -1px 2px rgba(255, 255, 255, 0.8),
+					0 2px 8px rgba(0, 0, 0, 0.06);
+				transition-duration: 0.05s;
+			}
+			.soft-btn:focus-visible {
+				outline: 2px solid var(--black);
+				outline-offset: 3px;
+			}
+			.play {
+				width: 3.2rem;
+				height: 3.2rem;
+				padding: 0;
+				display: grid;
+				place-items: center;
+			}
+			.play::before {
+				content: "";
+				width: 0;
+				height: 0;
+				border-left: 0.75rem solid var(--black);
+				border-top: 0.45rem solid transparent;
+				border-bottom: 0.45rem solid transparent;
+				margin-left: 0.15rem;
+			}
+
+			@media (max-width: 480px) {
+				.dock {
+					gap: 0.5rem;
+				}
+				.soft-btn {
+					padding: 0.75rem 1.05rem;
+				}
+			}
+
+			@media (prefers-reduced-motion: reduce) {
+				.blob {
+					animation: none;
+				}
 			}
 
 			/* Glasbruch: das Skript legt mehrere Kopien des Texts übereinander,
@@ -106,8 +232,10 @@
 				position: relative;
 				width: fit-content;
 				margin: 0;
-				/* füllt die Breite, wird aber nie höher als das Fenster */
-				font-size: min(calc((100vw - 3rem) * 0.314), calc((100svh - 3rem) / 1.8));
+				/* füllt die Breite, lässt aber Platz für die Button-Reihe */
+				/* etwas kleiner als die volle Breite: die 3D-Neigung braucht Luft an den Rändern */
+				font-size: min(calc((100vw - 3rem) * 0.295), calc((100svh - 16rem) / 1.8));
+				transform-style: preserve-3d;
 				font-weight: 500;
 				line-height: 0.86;
 				letter-spacing: -0.045em;
@@ -137,11 +265,27 @@
 		</style>
 	</head>
 	<body>
-		<main class="hero">
-			<h1 class="glass" data-seed="7">
-				<span class="glass-base">Julian<br />Thurner</span>
-			</h1>
-		</main>
+		<div class="stage">
+			<div class="scene">
+				<div class="mass" aria-hidden="true">
+					<span class="blob"></span>
+					<span class="blob"></span>
+					<span class="blob"></span>
+					<span class="blob"></span>
+				</div>
+				<main class="hero">
+					<h1 class="glass" data-seed="7">
+						<span class="glass-base">Julian<br />Thurner</span>
+					</h1>
+				</main>
+				<nav class="dock" aria-label="Navigation (Platzhalter)">
+					<button class="soft-btn" type="button">Projekte</button>
+					<button class="soft-btn" type="button">Info</button>
+					<button class="soft-btn" type="button">Kontakt</button>
+					<button class="soft-btn play" type="button" aria-label="Ton abspielen"></button>
+				</nav>
+			</div>
+		</div>
 
 		<script>
 			const glass = document.querySelector(".glass");
@@ -223,6 +367,7 @@
 					piece.style.transformOrigin = `${gx.toFixed(1)}px ${gy.toFixed(1)}px`;
 					piece.style.transform =
 						`translate(${(between(-1, 1) * amp).toFixed(4)}em, ${(between(-1, 1) * amp).toFixed(4)}em) ` +
+						`translateZ(${(between(2, 9) + near * between(0, 26)).toFixed(1)}px) ` +
 						`rotate(${between(-0.5, 0.5).toFixed(3)}deg) scale(${(1 + between(0, 0.012)).toFixed(4)})`;
 					glass.appendChild(piece);
 
@@ -244,6 +389,45 @@
 				frame = requestAnimationFrame(shatter);
 			}).observe(glass);
 			document.fonts.ready.then(shatter);
+
+			// 3D-Neigung der Szene: folgt der Maus, wackelt ohne Maus langsam von selbst
+			const scene = document.querySelector(".scene");
+			const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+			if (!reduceMotion) {
+				let targetX = 0, targetY = 0, curX = 0, curY = 0, pointerActive = false;
+				addEventListener("pointermove", (e) => {
+					pointerActive = true;
+					targetX = e.clientX / innerWidth - 0.5;
+					targetY = e.clientY / innerHeight - 0.5;
+				});
+				document.documentElement.addEventListener("pointerleave", () => (pointerActive = false));
+				const start = performance.now();
+				(function tilt(now) {
+					let gx = targetX, gy = targetY;
+					if (!pointerActive) {
+						const t = (now - start) / 1000;
+						gx = Math.sin(t * 0.33) * 0.2;
+						gy = Math.cos(t * 0.21) * 0.16;
+					}
+					curX += (gx - curX) * 0.05;
+					curY += (gy - curY) * 0.05;
+					scene.style.transform = `rotateX(${(-curY * 7).toFixed(3)}deg) rotateY(${(curX * 10).toFixed(3)}deg)`;
+					requestAnimationFrame(tilt);
+				})(start);
+
+				// Buttons kippen zusätzlich leicht zur Maus
+				for (const btn of document.querySelectorAll(".soft-btn")) {
+					btn.addEventListener("pointermove", (e) => {
+						const r = btn.getBoundingClientRect();
+						btn.style.setProperty("--ry", `${((e.clientX - r.left) / r.width - 0.5) * 9}deg`);
+						btn.style.setProperty("--rx", `${(0.5 - (e.clientY - r.top) / r.height) * 9}deg`);
+					});
+					btn.addEventListener("pointerleave", () => {
+						btn.style.setProperty("--rx", "0deg");
+						btn.style.setProperty("--ry", "0deg");
+					});
+				}
+			}
 		</script>
 	</body>
 </html>
