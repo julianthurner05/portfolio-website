@@ -99,6 +99,37 @@
 				height: 100%;
 				display: block;
 			}
+			/* Buttons: der Text ist HTML, der 3D-Körper darunter wird vom
+			   Shader aus der Masse gewölbt und sinkt beim Drücken ein */
+			.dock {
+				position: fixed;
+				left: 0;
+				right: 0;
+				bottom: 9%;
+				display: flex;
+				justify-content: center;
+				gap: 3vmin;
+				pointer-events: none;
+			}
+			.dock button {
+				pointer-events: auto;
+				appearance: none;
+				background: none;
+				border: 0;
+				font: inherit;
+				font-weight: 500;
+				font-size: clamp(0.95rem, 1.4vmin + 0.5rem, 1.2rem);
+				letter-spacing: 0.01em;
+				color: var(--black);
+				padding: 1.05em 1.9em;
+				cursor: none;
+			}
+			.dock button:focus-visible {
+				outline: 2px solid var(--black);
+				outline-offset: 4px;
+				border-radius: 999px;
+			}
+
 			/* Eigener Cursor: kleiner schwarzer Punkt, der dem Zeiger
 			   weich hinterherläuft; der Systemcursor wird ausgeblendet */
 			@media (pointer: fine) {
@@ -129,6 +160,11 @@
 	</head>
 	<body>
 		<canvas id="mass" aria-hidden="true"></canvas>
+		<nav class="dock" aria-label="Navigation (Platzhalter)">
+			<button type="button">Projekte</button>
+			<button type="button">Info</button>
+			<button type="button">Kontakt</button>
+		</nav>
 		<div id="cursor" aria-hidden="true"></div>
 
 		<script>
@@ -153,6 +189,8 @@
 					uniform vec2 u_mvel;
 					uniform float u_mstr;
 					uniform float u_beat;
+					uniform vec4 u_btn[3];
+					uniform vec3 u_btnH;
 
 					vec2 hash(vec2 p) {
 						p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
@@ -177,6 +215,12 @@
 						return v;
 					}
 
+					// Abstand zu einer Pille (abgerundetes Rechteck)
+					float sdPill(vec2 q, vec2 b) {
+						vec2 d = abs(q) - b + b.y;
+						return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - b.y;
+					}
+
 					float height(in vec2 p) {
 						float t = u_time * 0.13;
 						// Der Zeiger verformt das Feld selbst: Masse wird seitlich
@@ -196,6 +240,12 @@
 						h += (0.05 + 0.05 * u_beat) * fbm(p * 2.1 - t * 0.15);
 						// breite, flache Wölbung unterm Zeiger
 						h += 0.08 * u_mstr * exp(-dot(dm, dm) * 2.5);
+						// Buttons: aus der Masse gewölbte Pillen mit weicher Schulter
+						for (int i = 0; i < 3; i++) {
+							float d = sdPill(p - u_btn[i].xy, u_btn[i].zw);
+							float lift = i == 0 ? u_btnH.x : (i == 1 ? u_btnH.y : u_btnH.z);
+							h += lift * 0.3 * (1.0 - smoothstep(-0.012, 0.02, d));
+						}
 						return h;
 					}
 
@@ -248,6 +298,35 @@
 
 				const U = (n) => gl.getUniformLocation(prog, n);
 				const uRes = U("u_res"), uTime = U("u_time"), uMouse = U("u_mouse"), uMvel = U("u_mvel"), uMstr = U("u_mstr"), uBeat = U("u_beat");
+				const uBtn = U("u_btn[0]"), uBtnH = U("u_btnH");
+
+				// Buttons: Ruhehöhe 1, unter der Maus höher, gedrückt fast versenkt
+				const btnEls = Array.from(document.querySelectorAll(".dock button"));
+				const btnCur = [1, 1, 1], btnTgt = [1, 1, 1];
+				btnEls.forEach((b, i) => {
+					b.addEventListener("pointerenter", () => (btnTgt[i] = 1.35));
+					b.addEventListener("pointerleave", () => (btnTgt[i] = 1));
+					b.addEventListener("pointerdown", () => (btnTgt[i] = 0.12));
+				});
+				addEventListener("pointerup", () => {
+					for (let i = 0; i < 3; i++) if (btnTgt[i] < 1) btnTgt[i] = 1;
+					btnEls.forEach((b, i) => b.matches(":hover") && (btnTgt[i] = 1.35));
+				});
+				function btnUniforms() {
+					const cw = canvas.clientWidth, ch = canvas.clientHeight;
+					const flat = [];
+					for (const b of btnEls) {
+						const r = b.getBoundingClientRect();
+						flat.push(
+							((r.left + r.right) / 2 - cw / 2) / ch * zoom,
+							(ch / 2 - (r.top + r.bottom) / 2) / ch * zoom,
+							(r.width / 2 / ch) * zoom,
+							(r.height / 2 / ch) * zoom
+						);
+					}
+					gl.uniform4fv(uBtn, flat);
+					gl.uniform3f(uBtnH, btnCur[0], btnCur[1], btnCur[2]);
+				}
 
 				// Renderauflösung leicht reduziert: schneller, und die weichen
 				// Verläufe vertragen das Hochskalieren problemlos
@@ -283,11 +362,15 @@
 				document.documentElement.addEventListener("pointerleave", () => (tStr = 0));
 
 				// Unechter Takt (~104 bpm, jeder vierte Schlag betont), bis echtes
-				// Audio da ist: kurzer Anschlag, weiches Ausklingen
+				// Audio da ist. Der Anschlag steigt über ~70 ms weich an statt zu
+				// springen, sonst wirkt der Puls wie Ruckeln.
 				function beatEnv(now) {
 					const tb = (now / 1000) * (104 / 60);
+					const phase = tb % 1;
 					const accent = Math.floor(tb) % 4 === 0 ? 1 : 0.6;
-					return accent * Math.exp(-3.5 * (tb % 1));
+					const a = 0.12;
+					const env = phase < a ? phase / a : Math.exp(-4 * (phase - a));
+					return accent * env * env * (3 - 2 * env);
 				}
 
 				function draw(now) {
@@ -299,6 +382,8 @@
 					tvx *= 0.94;
 					tvy *= 0.94;
 					gl.uniform1f(uBeat, reduceMotion ? 0 : beatEnv(now));
+					for (let i = 0; i < 3; i++) btnCur[i] += (btnTgt[i] - btnCur[i]) * 0.22;
+					btnUniforms();
 					gl.uniform2f(uRes, canvas.width, canvas.height);
 					gl.uniform1f(uTime, now / 1000);
 					gl.uniform2f(uMouse, cx, cy);
