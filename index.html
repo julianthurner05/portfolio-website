@@ -99,53 +99,6 @@
 				height: 100%;
 				display: block;
 			}
-			/* Arbeiten liegen lose auf der Masse, mit weichem Kontaktschatten;
-			   jede wippt kaum merklich in ihrem eigenen Rhythmus */
-			.works {
-				position: fixed;
-				inset: 0;
-				pointer-events: none;
-			}
-			.work {
-				position: absolute;
-				box-shadow:
-					0 2px 8px rgba(0, 0, 0, 0.1),
-					0 30px 70px rgba(0, 0, 0, 0.18);
-				animation: bob ease-in-out infinite alternate;
-			}
-			.work.w1 {
-				width: 48vmin;
-				left: 14%;
-				top: 16%;
-				rotate: -2deg;
-				animation-duration: 11s;
-			}
-			.work.w2 {
-				width: 38vmin;
-				right: 10%;
-				top: 38%;
-				rotate: 1.6deg;
-				animation-duration: 14s;
-				animation-delay: -6s;
-			}
-			.work.w3 {
-				width: 30vmin;
-				left: 22%;
-				bottom: 12%;
-				rotate: 1deg;
-				animation-duration: 17s;
-				animation-delay: -3s;
-			}
-			@keyframes bob {
-				from { translate: 0 -5px; }
-				to { translate: 0 5px; }
-			}
-			@media (prefers-reduced-motion: reduce) {
-				.work {
-					animation: none;
-				}
-			}
-
 			/* Eigener Cursor: kleiner schwarzer Punkt, der dem Zeiger
 			   weich hinterherläuft; der Systemcursor wird ausgeblendet */
 			@media (pointer: fine) {
@@ -176,11 +129,6 @@
 	</head>
 	<body>
 		<canvas id="mass" aria-hidden="true"></canvas>
-		<div class="works">
-			<img class="work w1" src="werke/fitting-room.jpg" alt="Fitting Room – Installation mit Umkleidekabine und Hörstation" />
-			<img class="work w2" src="werke/sinn-des-lebens.jpg" alt="Der Sinn des Lebens – Zine-Reihe in Grün" />
-			<img class="work w3" src="werke/asoziale-medien.jpg" alt="Asoziale Medien – Plakatserie mit Glitch-Typografie" />
-		</div>
 		<div id="cursor" aria-hidden="true"></div>
 
 		<script>
@@ -258,7 +206,7 @@
 						float h0 = height(p);
 						float hx = height(p + vec2(e, 0.0));
 						float hy = height(p + vec2(0.0, e));
-						float s = 0.16 * (1.0 + 0.35 * u_beat);
+						float s = 0.24 * (1.0 + 0.35 * u_beat);
 						vec3 n = normalize(vec3((h0 - hx) / e * s, (h0 - hy) / e * s, 1.0));
 
 						vec3 L = normalize(vec3(-0.4, 0.55, 0.75));
@@ -266,9 +214,9 @@
 						vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
 						float spec = pow(clamp(dot(n, H), 0.0, 1.0), 48.0);
 
-						float col = mix(0.8, 1.0, wrap);
-						col += spec * 0.05 + 0.012 * u_beat;
-						col *= 1.0 - 0.06 * smoothstep(0.15, -0.55, h0);
+						float col = mix(0.74, 1.0, wrap);
+						col += spec * 0.08 + 0.012 * u_beat;
+						col *= 1.0 - 0.09 * smoothstep(0.15, -0.55, h0);
 
 						// Dithering gegen Streifen in den hellen Verläufen
 						float dith = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
