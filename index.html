@@ -222,29 +222,19 @@
 					}
 
 					float height(in vec2 p) {
-						float t = u_time * 0.3;
 						// Der Zeiger verformt das Feld selbst: Masse wird seitlich
 						// verdrängt und in Bewegungsrichtung mitgezogen
 						vec2 dm = p - u_mouse;
 						float infl = exp(-dot(dm, dm) * 5.0);
 						p -= dm * 0.55 * u_mstr * infl;
 						p -= u_mvel * infl;
-						vec2 q = vec2(
-							fbm(p + t * vec2(0.10, 0.06)),
-							fbm(p + vec2(5.2, 1.3) - t * vec2(0.07, 0.09)));
-						vec2 r = vec2(
-							fbm(p + 1.15 * q + vec2(1.7, 9.2) + t * vec2(0.12, 0.05)),
-							fbm(p + 1.15 * q + vec2(8.3, 2.8) - t * vec2(0.06, 0.11)));
-						float h = fbm(p + r);
-						// Wandernder Puls: ein Wellenpaket läuft über die Fläche und
-						// verschwindet am Rand; jede Welle kommt aus einer anderen
-						// Richtung, das Schwellen steuert die Stärke
-						float amp = 0.45 + 0.75 * u_beat;
-						float cyc = floor(u_time * 0.14);
-						float ph = fract(u_time * 0.14);
-						vec2 dir = vec2(cos(cyc * 2.4), sin(cyc * 2.4));
-						float x = dot(p, dir) - (ph * 3.2 - 1.6);
-						h += amp * 0.24 * sin(x * 24.0 + u_time * 2.0) * exp(-x * x * 10.0);
+						// Nur die Wellen, keine zweite Ebene darunter: eine langsam
+						// driftende Quelle, ihre Ringe sind die ganze Oberfläche;
+						// das Schwellen steuert die Stärke
+						float amp = 0.7 + 0.5 * u_beat;
+						vec2 s1 = vec2(0.22 * sin(u_time * 0.4), 0.16 * cos(u_time * 0.53));
+						float d1 = length(p - s1);
+						float h = amp * 0.26 * sin(d1 * 30.0 - u_time * 7.0) * exp(-d1 * 0.7);
 						// breite, flache Wölbung unterm Zeiger
 						h += 0.08 * u_mstr * exp(-dot(dm, dm) * 2.5);
 						// Buttons: aus der Masse gewölbte Pillen mit weicher Schulter
