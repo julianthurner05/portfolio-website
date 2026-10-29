@@ -236,17 +236,12 @@
 							fbm(p + 1.15 * q + vec2(1.7, 9.2) + t * vec2(0.12, 0.05)),
 							fbm(p + 1.15 * q + vec2(8.3, 2.8) - t * vec2(0.06, 0.11)));
 						float h = fbm(p + r);
-						// Schallwellen: zwei wandernde Quellen und eine ebene Welle
-						// laufen durch die Masse und interferieren; das Schwellen
-						// steuert, wie stark sie ausschlagen
+						// Ein einzelnes Pulszentrum: driftet langsam um die Mitte und
+						// schickt Ringe nach außen; das Schwellen steuert die Stärke
 						float amp = 0.45 + 0.75 * u_beat;
-						vec2 s1 = vec2(0.5 * sin(u_time * 0.6), 0.35 * cos(u_time * 0.83));
-						vec2 s2 = vec2(0.55 * sin(u_time * 1.1 + 2.4), 0.4 * sin(u_time * 0.47 + 1.2));
+						vec2 s1 = vec2(0.22 * sin(u_time * 0.4), 0.16 * cos(u_time * 0.53));
 						float d1 = length(p - s1);
-						float d2 = length(p - s2);
-						h += amp * 0.2 * sin(d1 * 30.0 - u_time * 7.0) * exp(-d1 * 1.1);
-						h += amp * 0.16 * sin(d2 * 42.0 - u_time * 9.0) * exp(-d2 * 1.4);
-						h += amp * 0.06 * sin(dot(p, vec2(14.0, 10.0)) - u_time * 5.0);
+						h += amp * 0.22 * sin(d1 * 30.0 - u_time * 7.0) * exp(-d1 * 0.9);
 						// breite, flache Wölbung unterm Zeiger
 						h += 0.08 * u_mstr * exp(-dot(dm, dm) * 2.5);
 						// Buttons: aus der Masse gewölbte Pillen mit weicher Schulter
