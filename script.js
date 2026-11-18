@@ -468,7 +468,6 @@ const closeCinema = () => {
 	if (!cinemaVideo) return;
 	document.body.classList.remove("cinema");
 	cinemaVideo.muted = true;
-	cinemaVideo.controls = false;
 	cinemaVideo = null;
 };
 for (const btn of document.querySelectorAll(".film-btn")) {
@@ -482,7 +481,6 @@ for (const btn of document.querySelectorAll(".film-btn")) {
 		document.body.classList.add("cinema");
 		cinemaVideo.currentTime = 0;
 		cinemaVideo.muted = false;
-		cinemaVideo.controls = true;
 		cinemaVideo.play().catch(() => {});
 	});
 }
@@ -490,3 +488,52 @@ document.querySelector(".cinema-close") && document.querySelector(".cinema-close
 addEventListener("keydown", (e) => {
 	if (e.key === "Escape") closeCinema();
 });
+
+// Eigene Kinoleiste: pause/play als Wort, rote Linie zum Springen, Zeit
+const cBar = document.querySelector(".cinema-bar");
+if (cBar) {
+	const cPlay = cBar.querySelector(".c-play");
+	const cTrack = cBar.querySelector(".c-track");
+	const cProg = cBar.querySelector(".c-prog");
+	const cTime = cBar.querySelector(".c-time");
+	const fmt = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+	cPlay.addEventListener("click", () => {
+		if (!cinemaVideo) return;
+		if (cinemaVideo.paused) {
+			cinemaVideo.play().catch(() => {});
+			cPlay.textContent = "pause";
+		} else {
+			cinemaVideo.pause();
+			cPlay.textContent = "play";
+		}
+	});
+	const seek = (e) => {
+		if (!cinemaVideo || !cinemaVideo.duration) return;
+		const r = cTrack.getBoundingClientRect();
+		cinemaVideo.currentTime = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * cinemaVideo.duration;
+	};
+	cTrack.addEventListener("pointerdown", (e) => {
+		seek(e);
+		const move = (ev) => seek(ev);
+		const up = () => {
+			removeEventListener("pointermove", move);
+			removeEventListener("pointerup", up);
+		};
+		addEventListener("pointermove", move);
+		addEventListener("pointerup", up);
+	});
+	(function cTick() {
+		if (cinemaVideo && cinemaVideo.duration) {
+			cProg.style.width = (cinemaVideo.currentTime / cinemaVideo.duration) * 100 + "%";
+			cTime.textContent = `${fmt(cinemaVideo.currentTime)} / ${fmt(cinemaVideo.duration)}`;
+			cPlay.textContent = cinemaVideo.paused ? "play" : "pause";
+		}
+		requestAnimationFrame(cTick);
+	})();
+	addEventListener("keydown", (e) => {
+		if (e.key === " " && cinemaVideo) {
+			e.preventDefault();
+			cPlay.click();
+		}
+	});
+}

@@ -715,6 +715,11 @@ body.listening .track.current {
 body.cinema .media-hero {
 	background: #000;
 }
+body.cinema .infobox {
+	opacity: 0;
+	pointer-events: none;
+	transition: transform 0.5s cubic-bezier(0.33, 1, 0.36, 1), opacity 0.4s ease;
+}
 body.cinema .topbar,
 body.cinema .media-hero h1,
 body.cinema .media-hero .more,
@@ -726,6 +731,59 @@ body.cinema .film-btn {
 body.cinema main.snap {
 	overflow: hidden;
 }
+.cinema-bar {
+	position: fixed;
+	left: var(--pad);
+	right: var(--pad);
+	bottom: var(--pad);
+	z-index: 35;
+	display: flex;
+	align-items: center;
+	gap: 1.4rem;
+	color: #fff;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.8s ease;
+}
+body.cinema .cinema-bar {
+	opacity: 1;
+	pointer-events: auto;
+}
+.c-play {
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	font-size: 0.95rem;
+	padding: 0.3em 0;
+	min-width: 3.2em;
+	text-align: left;
+}
+.c-track {
+	position: relative;
+	flex: 1;
+	height: 14px;
+	display: grid;
+	align-items: center;
+}
+.c-track::before {
+	content: "";
+	height: 2px;
+	background: rgba(255, 255, 255, 0.35);
+	grid-area: 1 / 1;
+}
+.c-prog {
+	grid-area: 1 / 1;
+	height: 2px;
+	width: 0%;
+	background: var(--red);
+}
+.c-time {
+	font-size: 0.8rem;
+	letter-spacing: 0.04em;
+	font-variant-numeric: tabular-nums;
+}
+
 .cinema-close {
 	position: fixed;
 	top: var(--pad);
@@ -742,7 +800,60 @@ body.cinema main.snap {
 	pointer-events: none;
 	transition: opacity 0.8s ease;
 }
-body.cinema .cinema-close {
+body.cinema .cinema-bar {
+	position: fixed;
+	left: var(--pad);
+	right: var(--pad);
+	bottom: var(--pad);
+	z-index: 35;
+	display: flex;
+	align-items: center;
+	gap: 1.4rem;
+	color: #fff;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.8s ease;
+}
+body.cinema .cinema-bar {
+	opacity: 1;
+	pointer-events: auto;
+}
+.c-play {
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	font-size: 0.95rem;
+	padding: 0.3em 0;
+	min-width: 3.2em;
+	text-align: left;
+}
+.c-track {
+	position: relative;
+	flex: 1;
+	height: 14px;
+	display: grid;
+	align-items: center;
+}
+.c-track::before {
+	content: "";
+	height: 2px;
+	background: rgba(255, 255, 255, 0.35);
+	grid-area: 1 / 1;
+}
+.c-prog {
+	grid-area: 1 / 1;
+	height: 2px;
+	width: 0%;
+	background: var(--red);
+}
+.c-time {
+	font-size: 0.8rem;
+	letter-spacing: 0.04em;
+	font-variant-numeric: tabular-nums;
+}
+
+.cinema-close {
 	opacity: 1;
 	pointer-events: auto;
 }
