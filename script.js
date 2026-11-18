@@ -32,6 +32,51 @@ for (const hero of document.querySelectorAll(".hero")) {
 	});
 }
 
+// Hörseite: ein gemeinsamer Player, eine Spur zur Zeit,
+// rote Linie unter der laufenden Zeile zeigt den Fortschritt
+const trackList = document.querySelectorAll(".track");
+if (trackList.length) {
+	const audio = new Audio();
+	let current = null;
+	const btnOf = (li) => li.querySelector(".t-btn");
+	const stopRow = (li) => {
+		btnOf(li).textContent = "play";
+		li.style.setProperty("--p", "0%");
+	};
+	audio.addEventListener("timeupdate", () => {
+		if (current && audio.duration)
+			current.style.setProperty("--p", (audio.currentTime / audio.duration) * 100 + "%");
+	});
+	audio.addEventListener("ended", () => {
+		if (current) stopRow(current);
+		current = null;
+	});
+	for (const li of trackList) {
+		btnOf(li).addEventListener("click", () => {
+			const btn = btnOf(li);
+			if (current === li && !audio.paused) {
+				audio.pause();
+				btn.textContent = "play";
+				return;
+			}
+			if (current && current !== li) stopRow(current);
+			if (current !== li) {
+				current = li;
+				audio.src = li.dataset.src;
+			}
+			audio.play().then(
+				() => (btn.textContent = "pause"),
+				() => {
+					// Datei fehlt noch: kurz "bald" zeigen
+					btn.textContent = "bald";
+					setTimeout(() => (btn.textContent = "play"), 1600);
+					current = null;
+				}
+			);
+		});
+	}
+}
+
 // Kontakt: baut aus den Feldern eine Mail und öffnet das Mailprogramm
 const form = document.querySelector("form.contact");
 if (form) {

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="de">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="robots" content="noindex" />
+		<title>Musik – Julian Thurner</title>
+		<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+		<link rel="icon" href="favicon.png" type="image/png" sizes="96x96" />
+		<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+		<link rel="stylesheet" href="styles.css" />
+	</head>
+	<body>
+		<button class="menu-btn" aria-label="Menü" aria-expanded="false"></button>
+		<nav class="overlay" aria-label="Hauptmenü">
+			<a class="pill" href="/">Arbeiten</a>
+			<a class="pill" href="/musik" aria-current="page">Musik</a>
+			<a class="pill" href="/about">Über</a>
+			<a class="pill" href="/kontakt">Kontakt</a>
+		</nav>
+
+		<main>
+			<div class="page listen">
+				<div class="listen-head"><span>Titel</span><span>Play</span></div>
+				<ul class="tracks">
+					<li class="track" data-src="audio/2026-11-18-improvisation.mp3">
+						<span class="t-title">18.11.2026 (Improvisation)</span>
+						<button class="t-btn" type="button" aria-label="18.11.2026, Improvisation, abspielen">play</button>
+						<span class="t-bar" aria-hidden="true"></span>
+					</li>
+					<li class="track" data-src="audio/consolation-no-3-liszt.mp3">
+						<span class="t-title">Consolation No. 3 (Liszt)</span>
+						<button class="t-btn" type="button" aria-label="Consolation No. 3 von Liszt abspielen">play</button>
+						<span class="t-bar" aria-hidden="true"></span>
+					</li>
+					<li class="track" data-src="audio/2026-10-14-improvisation-1.mp3">
+						<span class="t-title">14.10.2026 (Improvisation)</span>
+						<button class="t-btn" type="button" aria-label="14.10.2026, erste Improvisation, abspielen">play</button>
+						<span class="t-bar" aria-hidden="true"></span>
+					</li>
+					<li class="track" data-src="audio/2026-10-14-improvisation-2.mp3">
+						<span class="t-title">14.10.2026 (Improvisation)</span>
+						<button class="t-btn" type="button" aria-label="14.10.2026, zweite Improvisation, abspielen">play</button>
+						<span class="t-bar" aria-hidden="true"></span>
+					</li>
+				</ul>
+			</div>
+		</main>
+
+		<script src="script.js"></script>
+	</body>
+</html>
