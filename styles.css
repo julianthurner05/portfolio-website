@@ -578,6 +578,63 @@ body.listening .track.current {
 	transition: transform 1.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Design: ein Projekt pro Viewport, Medien als Vollbild-Slider */
+.slider {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+}
+.slides {
+	display: flex;
+	height: 100%;
+	transition: transform 0.7s cubic-bezier(0.33, 1, 0.36, 1);
+}
+.slides figure {
+	margin: 0;
+	flex: 0 0 100%;
+	height: 100%;
+}
+.slides img,
+.slides video {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+.slide-nav {
+	position: absolute;
+	top: 50%;
+	translate: 0 -50%;
+	z-index: 2;
+	border: 0;
+	background: none;
+	color: #fff;
+	mix-blend-mode: difference;
+	font: inherit;
+	font-size: 1.8rem;
+	padding: 0.8rem;
+}
+.slide-nav.prev {
+	left: calc(var(--pad) - 0.8rem);
+}
+.slide-nav.next {
+	right: calc(var(--pad) - 0.8rem);
+}
+.media-hero h1,
+.media-hero .more {
+	color: #fff;
+	mix-blend-mode: difference;
+	z-index: 2;
+}
+.media-hero .infobox {
+	z-index: 3;
+}
+@media (prefers-reduced-motion: reduce) {
+	.slides {
+		transition: none;
+	}
+}
+
 /* Projektseiten: Intro in der Otto, Medien in voller Spaltenbreite */
 .project {
 	align-content: start;

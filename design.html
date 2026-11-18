@@ -29,36 +29,84 @@
 		<div id="cursor" aria-hidden="true"></div>
 		<div id="cursor-ring" aria-hidden="true"></div>
 
-		<main>
-			<section class="hero on-blue" id="design">
-				<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-					<circle cx="560" cy="430" r="150" fill="var(--yellow)" />
-					<rect class="spin" x="740" y="310" width="240" height="240" fill="var(--red)" />
-					<path d="M 1060 550 L 1260 550 L 1160 380 Z" fill="var(--paper)" />
-					<rect x="300" y="620" width="1000" height="7" fill="var(--paper)" />
-				</svg>
-				<h1>Design</h1>
-				<button class="pill more" aria-expanded="false" aria-controls="design-info">Mehr erfahren</button>
-				<div class="infobox" id="design-info">
+		<main class="snap">
+			<section class="hero media-hero" id="liebes-tagebuch">
+				<div class="slider">
+					<div class="slides">
+						<figure>
+							<img src="media/liebes-tagebuch-installation.jpg" alt="Fitting Room: eine Umkleidekabine aus grauen Vorhängen, darin sitzt ein Besucher mit Kopfhörern" />
+						</figure>
+						<figure>
+							<video src="media/liebes-tagebuch.mp4" muted loop playsinline autoplay></video>
+						</figure>
+						<figure>
+							<img src="media/liebes-tagebuch-zine.jpg" alt="Alle Doppelseiten des Zines im Überblick: gesetzte Einträge auf Weiß, handgeschriebene Seiten auf Schwarz" />
+						</figure>
+					</div>
+					<button class="slide-nav prev" aria-label="Vorheriges Bild">←</button>
+					<button class="slide-nav next" aria-label="Nächstes Bild">→</button>
+				</div>
+				<h1>Liebes Tagebuch</h1>
+				<button class="pill more" aria-expanded="false" aria-controls="liebes-tagebuch-info">Mehr erfahren</button>
+				<div class="infobox" id="liebes-tagebuch-info">
 					<div class="infobox-head">
-						<h2>Design</h2>
-						<span class="tag">3D</span>
-						<span class="tag">Grafik</span>
-						<span class="tag">Web</span>
+						<h2>Liebes Tagebuch</h2>
+						<span class="tag">Zine</span>
+						<span class="tag">Hörstation</span>
 						<button class="close" aria-label="Schließen">×</button>
 					</div>
-					<p class="intro">
-						Platzhaltertext: Hier folgt eine kurze Einführung in die
-						Designarbeiten.
-					</p>
-					<ul class="works-list">
-						<li><a href="/design-liebes-tagebuch"><span class="idx">01</span> Liebes Tagebuch</a></li>
-						<li><a href="/design-ich-werde-ich"><span class="idx">02</span> Ich werde Ich</a></li>
-						<li><span class="idx">03</span> Pendulum</li>
-						<li><span class="idx">04</span> Mementum</li>
-						<li><span class="idx">05</span> Liquid Pattern</li>
-						<li><span class="idx">06</span> Das Eventcatering</li>
-					</ul>
+					<div class="cols">
+						<p>
+							„Liebes Tagebuch, ich pass nicht rein“ — Einträge aus einem
+							Leben mit Magersucht. Ein Zine nach Marlenes Geschichte,
+							erzählt zwischen gesetzten Tagebucheinträgen und
+							handgeschriebenen Seiten. Text und Gestaltung: Julian Thurner.
+						</p>
+						<p>
+							In der Ausstellung wurde das Tagebuch zur Hörstation: eine
+							Umkleidekabine, in der man Platz nimmt und den Einträgen
+							zuhört.
+						</p>
+					</div>
+				</div>
+			</section>
+
+			<section class="hero media-hero" id="ich-werde-ich">
+				<div class="slider">
+					<div class="slides">
+						<figure>
+							<video src="media/ich-werde-ich.mp4" muted loop playsinline autoplay></video>
+						</figure>
+						<figure>
+							<img src="media/ich-werde-ich-3.jpg" alt="Violetter Umschlag des Gedichtbands Ich werde Ich mit verstreuten Gedichttiteln und Namen" />
+						</figure>
+						<figure>
+							<img src="media/ich-werde-ich-1.jpg" alt="Doppelseite mit dem Gedicht Lebensabschnittsstimmung" />
+						</figure>
+						<figure>
+							<img src="media/ich-werde-ich-2.jpg" alt="Doppelseite mit dem Gedicht Rattenbestand" />
+						</figure>
+					</div>
+					<button class="slide-nav prev" aria-label="Vorheriges Bild">←</button>
+					<button class="slide-nav next" aria-label="Nächstes Bild">→</button>
+				</div>
+				<h1>Ich werde Ich</h1>
+				<button class="pill more" aria-expanded="false" aria-controls="ich-werde-ich-info">Mehr erfahren</button>
+				<div class="infobox" id="ich-werde-ich-info">
+					<div class="infobox-head">
+						<h2>Ich werde Ich</h2>
+						<span class="tag">Gedichtband</span>
+						<button class="close" aria-label="Schließen">×</button>
+					</div>
+					<div class="cols">
+						<p>
+							Ein gemeinschaftlicher Gedichtband über das Ich im Werden —
+							mit Texten von Julian Thurner, Camilla Cadeggianini, Luisa
+							Riegler, Lukas Kuhl, Julija Torjanika, Clara Kogler und
+							Marcin Hentsch.
+						</p>
+						<p>Gestaltung: Julian Thurner.</p>
+					</div>
 				</div>
 			</section>
 		</main>

@@ -440,3 +440,24 @@ if (shelfReturn) {
 		);
 	});
 }
+
+// Vollbild-Slider der Designprojekte: Pfeile blättern, Videos
+// spielen nur auf der sichtbaren Folie
+for (const sl of document.querySelectorAll(".slider")) {
+	const slides = sl.querySelector(".slides");
+	const n = slides.children.length;
+	let i = 0;
+	const go = (d) => {
+		i = (i + d + n) % n;
+		slides.style.transform = `translateX(-${i * 100}%)`;
+		[...slides.children].forEach((f, k) => {
+			const v = f.querySelector("video");
+			if (v) {
+				if (k === i) v.play().catch(() => {});
+				else v.pause();
+			}
+		});
+	};
+	sl.querySelector(".prev").addEventListener("click", () => go(-1));
+	sl.querySelector(".next").addEventListener("click", () => go(1));
+}
