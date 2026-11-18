@@ -686,6 +686,70 @@ body.listening .track.current {
 	}
 }
 
+/* Kinomodus: alles blendet aus, Schwarz dahinter, Ton an */
+.slides figure {
+	position: relative;
+}
+.film-btn {
+	position: absolute;
+	left: 50%;
+	bottom: 1.2rem;
+	translate: -50%;
+	z-index: 2;
+	background: var(--paper);
+	transition: opacity 0.8s ease;
+}
+.media-hero {
+	transition: background 0.8s ease;
+}
+.media-hero h1,
+.media-hero .more,
+.slide-nav {
+	transition: opacity 0.8s ease;
+}
+.slider {
+	transition: width 0.8s ease, height 0.8s ease, top 0.8s ease;
+}
+body.cinema .media-hero {
+	background: #000;
+}
+body.cinema .topbar,
+body.cinema .media-hero h1,
+body.cinema .media-hero .more,
+body.cinema .slide-nav,
+body.cinema .film-btn {
+	opacity: 0;
+	pointer-events: none;
+}
+body.cinema .slider {
+	width: 100vw;
+	height: 100svh;
+	top: 50%;
+}
+body.cinema main.snap {
+	overflow: hidden;
+}
+.cinema-close {
+	position: fixed;
+	top: var(--pad);
+	right: var(--pad);
+	z-index: 35;
+	border: 0;
+	background: none;
+	color: #fff;
+	font: inherit;
+	font-size: 2rem;
+	line-height: 1;
+	padding: 0.3em 0.5em;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.8s ease;
+}
+body.cinema .cinema-close {
+	opacity: 1;
+	pointer-events: auto;
+}
+
 /* Projektseiten: Intro in der Otto, Medien in voller Spaltenbreite */
 .project {
 	align-content: start;

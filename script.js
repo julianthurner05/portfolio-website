@@ -461,3 +461,32 @@ for (const sl of document.querySelectorAll(".slider")) {
 	sl.querySelector(".prev").addEventListener("click", () => go(-1));
 	sl.querySelector(".next").addEventListener("click", () => go(1));
 }
+
+// Kinomodus: Film mit Ton auf Schwarz, alles andere blendet aus
+let cinemaVideo = null;
+const closeCinema = () => {
+	if (!cinemaVideo) return;
+	document.body.classList.remove("cinema");
+	cinemaVideo.muted = true;
+	cinemaVideo.controls = false;
+	cinemaVideo = null;
+};
+for (const btn of document.querySelectorAll(".film-btn")) {
+	btn.addEventListener("click", () => {
+		// ein offenes Info-Panel schließt mit
+		for (const hero of document.querySelectorAll(".hero.open")) {
+			hero.classList.remove("open");
+			hero.querySelector(".more").setAttribute("aria-expanded", "false");
+		}
+		cinemaVideo = btn.closest("figure").querySelector("video");
+		document.body.classList.add("cinema");
+		cinemaVideo.currentTime = 0;
+		cinemaVideo.muted = false;
+		cinemaVideo.controls = true;
+		cinemaVideo.play().catch(() => {});
+	});
+}
+document.querySelector(".cinema-close") && document.querySelector(".cinema-close").addEventListener("click", closeCinema);
+addEventListener("keydown", (e) => {
+	if (e.key === "Escape") closeCinema();
+});
