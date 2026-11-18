@@ -380,7 +380,9 @@ body.listening .track.current .t-bar {
 .tracks {
 	list-style: none;
 	margin: 0;
-	padding: 0;
+	/* Puffer oben und unten: jede Zeile kann per Scrollen exakt in
+	   der Bildschirmmitte stehen, auch die erste und die letzte */
+	padding: max(0px, calc(50svh - 10rem)) 0 50svh;
 	display: grid;
 	gap: clamp(1.2rem, 4.5vh, 3rem);
 }

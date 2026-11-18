@@ -64,108 +64,102 @@ if (trackList.length) {
 			return s / ((b - a) * 255);
 		};
 
-		// Fünf Programme, je Track eines (Index modulo fünf)
-		const flow = () => {
-			let pts = [], hue = 0;
+		// Fünf Programme, je Track eines (Index modulo fünf) — alle hell
+		// und nah an der ersten Fassung: Formen auf fast Weiß
+		const PAPER = "#fcfcfc", BLUE = "#2440c9", RED = "#e8401c", YELLOW = "#f5c518", BLACK = "#141414";
+		const kreise = () => {
+			let t = 0;
 			return {
-				init(s) {
-					s.colorMode(s.HSB, 360, 100, 100, 100);
-					pts = Array.from({ length: 350 }, () => [s.random(s.width), s.random(s.height)]);
-					s.background(235, 60, 8);
-				},
+				init() { t = 0; },
 				draw(s, lv) {
+					s.background(PAPER);
+					const cx = s.width / 2, cy = s.height / 2;
+					const u = Math.min(s.width, s.height);
+					t += 0.0025 + lv.low * 0.004;
+					s.noFill();
+					s.stroke(BLACK);
+					s.strokeWeight(2);
+					s.circle(cx, cy, u * (0.55 + lv.low * 0.12));
 					s.noStroke();
-					s.fill(235, 60, 8, 7);
-					s.rect(0, 0, s.width, s.height);
-					hue = (hue + 0.3 + lv.mid * 4) % 360;
-					s.stroke(hue, 85, 100, 55);
-					s.strokeWeight(1.5 + lv.low * 3);
-					const sp = 1.2 + lv.low * 7;
-					for (const p of pts) {
-						const a = s.noise(p[0] * 0.0013, p[1] * 0.0013, s.frameCount * 0.004) * s.TWO_PI * 2;
-						const nx = p[0] + Math.cos(a) * sp, ny = p[1] + Math.sin(a) * sp;
-						s.line(p[0], p[1], nx, ny);
-						p[0] = (nx + s.width) % s.width;
-						p[1] = (ny + s.height) % s.height;
-					}
+					s.fill(BLUE);
+					s.circle(cx + Math.cos(t) * u * 0.22, cy + Math.sin(t) * u * 0.18, u * (0.16 + lv.low * 0.22));
+					s.fill(RED);
+					s.circle(cx + Math.cos(-t * 1.7 + 2) * u * 0.3, cy + Math.sin(-t * 1.7 + 2) * u * 0.24, u * (0.08 + lv.mid * 0.18));
+					s.fill(YELLOW);
+					s.circle(cx + Math.cos(t * 2.6 + 4) * u * 0.36, cy + Math.sin(t * 2.6 + 4) * u * 0.3, u * (0.045 + lv.high * 0.14));
+					s.fill(BLACK);
+					s.circle(cx, cy, u * (0.012 + lv.mid * 0.02));
 				},
 			};
 		};
-		const pulse = () => {
+		const ringe = () => {
 			let rings = [], cool = 0;
 			return {
-				init(s) {
-					s.colorMode(s.HSB, 360, 100, 100, 100);
-					rings = [];
-				},
+				init() { rings = []; cool = 0; },
 				draw(s, lv) {
-					s.background(0, 0, 4);
-					if (lv.low > 0.4 && cool <= 0) {
-						rings.push(0);
-						cool = 10;
-					}
+					s.background(PAPER);
+					const u = Math.min(s.width, s.height);
+					if (lv.low > 0.4 && cool <= 0) { rings.push(0); cool = 12; }
 					cool--;
-					s.noFill();
 					rings = rings.filter((r) => r < s.width * 1.3);
+					s.noFill();
+					s.stroke(BLACK);
+					s.strokeWeight(1.5);
 					for (let i = 0; i < rings.length; i++) {
-						rings[i] += 3 + lv.low * 12;
-						s.stroke((rings[i] * 0.25 + 290) % 360, 95, 100, 70);
-						s.strokeWeight(2.5);
+						rings[i] += 2.5 + lv.low * 9;
 						s.circle(s.width / 2, s.height / 2, rings[i]);
 					}
-					s.stroke(185, 95, 100);
-					s.strokeWeight(2);
-					s.beginShape();
-					for (let i = 0; i < wave.length; i += 4) {
-						const a = (i / wave.length) * s.TWO_PI;
-						const r = Math.min(s.width, s.height) * 0.18 + (wave[i] - 128) * 0.7;
-						s.vertex(s.width / 2 + Math.cos(a) * r, s.height / 2 + Math.sin(a) * r);
-					}
-					s.endShape(s.CLOSE);
+					s.stroke(BLUE);
+					s.strokeWeight(3);
+					s.circle(s.width / 2, s.height / 2, u * (0.3 + lv.mid * 0.14));
+					s.stroke(YELLOW);
+					s.circle(s.width / 2, s.height / 2, u * (0.46 + lv.high * 0.1));
+					s.noStroke();
+					s.fill(RED);
+					s.circle(s.width / 2, s.height / 2, u * (0.03 + lv.low * 0.06));
 				},
 			};
 		};
 		const raster = () => {
+			const cols = [BLUE, YELLOW, RED, BLACK];
 			return {
-				init(s) {
-					s.colorMode(s.HSB, 360, 100, 100, 100);
-					s.rectMode(s.CENTER);
-				},
+				init(s) { s.rectMode(s.CENTER); },
 				draw(s, lv) {
-					s.background(45, 12, 96);
-					const n = 12, c = s.width / n, m = Math.ceil(s.height / c);
+					s.background(PAPER);
+					const n = 11, c = s.width / n, m = Math.ceil(s.height / c);
 					s.noStroke();
 					let k = 0;
 					for (let y = 0; y < m; y++)
 						for (let x = 0; x < n; x++) {
-							const e = bins[(k++ * 7) % bins.length] / 255;
+							const e = bins[(k * 7) % bins.length] / 255;
 							s.push();
 							s.translate(x * c + c / 2, y * c + c / 2);
-							s.rotate(s.frameCount * 0.01 + e * s.PI);
-							s.fill((15 + e * 70 + x * 4) % 360, 75, 95);
-							s.rect(0, 0, c * (0.15 + e * 0.7), c * (0.15 + e * 0.7));
+							s.rotate(s.frameCount * 0.006 + e * s.HALF_PI);
+							s.fill(cols[k % 4]);
+							const d = c * (0.08 + e * 0.5);
+							s.rect(0, 0, d, d);
 							s.pop();
+							k++;
 						}
 				},
 			};
 		};
 		const wellen = () => {
+			const cols = [BLACK, BLUE, RED, YELLOW];
 			return {
-				init(s) {
-					s.colorMode(s.HSB, 360, 100, 100, 100);
-				},
+				init() {},
 				draw(s, lv) {
-					s.background(230, 75, 6);
-					const rows = 9;
+					s.background(PAPER);
+					const rows = 7;
 					s.noFill();
 					s.strokeWeight(2);
 					for (let r = 0; r < rows; r++) {
 						const y0 = (s.height * (r + 1)) / (rows + 1);
-						s.stroke((135 + r * 14) % 360, 85, 100, 80);
+						s.stroke(cols[r % 4]);
 						s.beginShape();
 						for (let i = 0; i < wave.length; i += 6) {
 							const x = (i / wave.length) * s.width;
-							const amp = (0.3 + r * 0.12) * (0.4 + lv.mid * 1.6);
+							const amp = (0.25 + r * 0.1) * (0.4 + lv.mid * 1.4);
 							s.vertex(x, y0 + (wave[(i + r * 60) % wave.length] - 128) * amp);
 						}
 						s.endShape();
@@ -174,26 +168,25 @@ if (trackList.length) {
 			};
 		};
 		const orbits = () => {
+			const cols = [BLUE, RED, YELLOW, BLACK];
 			return {
-				init(s) {
-					s.colorMode(s.HSB, 360, 100, 100, 100);
-				},
+				init() {},
 				draw(s, lv) {
-					s.background(310, 45, 7);
+					s.background(PAPER);
 					const cx = s.width / 2, cy = s.height / 2;
 					const u = Math.min(s.width, s.height);
 					s.noStroke();
-					for (let i = 0; i < 90; i++) {
+					for (let i = 0; i < 70; i++) {
 						const e = bins[i % bins.length] / 255;
 						const a = s.frameCount * (0.002 + i * 0.0004) + i;
-						const r = u * 0.05 + i * u * 0.0075;
-						s.fill((i * 4 + s.frameCount * 0.5) % 360, 85, 100, 80);
-						s.circle(cx + Math.cos(a) * r, cy + Math.sin(a) * r * 0.75, 4 + e * 28);
+						const r = u * 0.06 + i * u * 0.008;
+						s.fill(cols[i % 4]);
+						s.circle(cx + Math.cos(a) * r, cy + Math.sin(a) * r * 0.75, 3 + e * 22);
 					}
 				},
 			};
 		};
-		const progs = [flow(), pulse(), raster(), wellen(), orbits()];
+		const progs = [kreise(), ringe(), raster(), wellen(), orbits()];
 		let prog = null;
 		let sk = null;
 		new p5((s) => {
@@ -242,7 +235,19 @@ if (trackList.length) {
 		viz && viz.start(li);
 	};
 	const exitListening = () => {
+		const cur = document.querySelector(".track.current");
 		document.body.classList.remove("listening");
+		if (cur) {
+			// Die Zeile bleibt optisch stehen: Transform fällt ohne
+			// Übergang weg, dafür springt der Scroll an die Stelle, an
+			// der ihre natürliche Position genau mittig liegt
+			let y = 0;
+			for (let el = cur; el; el = el.offsetParent) y += el.offsetTop;
+			cur.style.transition = "none";
+			cur.style.transform = "";
+			window.scrollTo({ top: Math.round(y + cur.offsetHeight / 2 - innerHeight / 2), behavior: "instant" });
+			requestAnimationFrame(() => (cur.style.transition = ""));
+		}
 		for (const li of trackList) {
 			li.classList.remove("current");
 			li.style.transform = "";
