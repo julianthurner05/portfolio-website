@@ -8,427 +8,81 @@
 		<link rel="icon" href="favicon.svg" type="image/svg+xml" />
 		<link rel="icon" href="favicon.png" type="image/png" sizes="96x96" />
 		<link rel="apple-touch-icon" href="apple-touch-icon.png" />
-		<style>
-			@font-face {
-				font-family: "Neue Montreal";
-				src: url("fonts/NeueMontreal-Light.otf") format("opentype");
-				font-weight: 300;
-				font-style: normal;
-				font-display: swap;
-			}
-			@font-face {
-				font-family: "Neue Montreal";
-				src: url("fonts/NeueMontreal-LightItalic.otf") format("opentype");
-				font-weight: 300;
-				font-style: italic;
-				font-display: swap;
-			}
-			@font-face {
-				font-family: "Neue Montreal";
-				src: url("fonts/NeueMontreal-Regular.otf") format("opentype");
-				font-weight: 400;
-				font-style: normal;
-				font-display: swap;
-			}
-			@font-face {
-				font-family: "Neue Montreal";
-				src: url("fonts/NeueMontreal-Italic.otf") format("opentype");
-				font-weight: 400;
-				font-style: italic;
-				font-display: swap;
-			}
-			@font-face {
-				font-family: "Neue Montreal";
-				src: url("fonts/NeueMontreal-Medium.otf") format("opentype");
-				font-weight: 500;
-				font-style: normal;
-				font-display: swap;
-			}
-			@font-face {
-				font-family: "Neue Montreal";
-				src: url("fonts/NeueMontreal-MediumItalic.otf") format("opentype");
-				font-weight: 500;
-				font-style: italic;
-				font-display: swap;
-			}
-			@font-face {
-				font-family: "Neue Montreal";
-				src: url("fonts/NeueMontreal-Bold.otf") format("opentype");
-				font-weight: 700;
-				font-style: normal;
-				font-display: swap;
-			}
-			@font-face {
-				font-family: "Neue Montreal";
-				src: url("fonts/NeueMontreal-BoldItalic.otf") format("opentype");
-				font-weight: 700;
-				font-style: italic;
-				font-display: swap;
-			}
-
-			:root {
-				--black: #000;
-				--white: #fff;
-			}
-			html {
-				height: 100%;
-				overflow: hidden;
-				overscroll-behavior: none;
-				-webkit-text-size-adjust: 100%;
-				text-size-adjust: 100%;
-			}
-			body {
-				box-sizing: border-box;
-				height: 100%;
-				overflow: hidden;
-				margin: 0;
-				background: var(--white);
-				color: var(--black);
-				font-family: "Neue Montreal", ui-sans-serif, system-ui, sans-serif;
-				font-weight: 400;
-				-webkit-font-smoothing: antialiased;
-				-moz-osx-font-smoothing: grayscale;
-				text-rendering: optimizeLegibility;
-			}
-			/* Die weiße Masse: ein Shader rechnet pro Pixel eine weiche,
-			   sich verformende Oberfläche, nur aus Licht und Schatten */
-			#mass {
-				position: fixed;
-				inset: 0;
-				width: 100%;
-				height: 100%;
-				display: block;
-			}
-			/* Buttons: der Text ist HTML, der 3D-Körper darunter wird vom
-			   Shader aus der Masse gewölbt und sinkt beim Drücken ein */
-			.dock {
-				position: fixed;
-				left: 0;
-				right: 0;
-				bottom: 9%;
-				display: flex;
-				justify-content: center;
-				gap: 3vmin;
-				pointer-events: none;
-			}
-			.dock button {
-				pointer-events: auto;
-				appearance: none;
-				background: none;
-				border: 0;
-				font: inherit;
-				font-weight: 500;
-				font-size: clamp(0.95rem, 1.4vmin + 0.5rem, 1.2rem);
-				letter-spacing: 0.01em;
-				color: var(--black);
-				padding: 1.05em 1.9em;
-				cursor: none;
-			}
-			.dock button:focus-visible {
-				outline: 2px solid var(--black);
-				outline-offset: 4px;
-				border-radius: 999px;
-			}
-
-			/* Eigener Cursor: kleiner schwarzer Punkt, der dem Zeiger
-			   weich hinterherläuft; der Systemcursor wird ausgeblendet */
-			@media (pointer: fine) {
-				html,
-				body {
-					cursor: none;
-				}
-			}
-			#cursor {
-				position: fixed;
-				top: 0;
-				left: 0;
-				width: 10px;
-				height: 10px;
-				border-radius: 50%;
-				background: var(--black);
-				pointer-events: none;
-				opacity: 0;
-				transition: opacity 0.25s ease;
-				z-index: 10;
-			}
-			@media (pointer: coarse) {
-				#cursor {
-					display: none;
-				}
-			}
-		</style>
+		<link rel="stylesheet" href="styles.css" />
 	</head>
 	<body>
-		<canvas id="mass" aria-hidden="true"></canvas>
-		<nav class="dock" aria-label="Navigation (Platzhalter)">
-			<button type="button">Projekte</button>
-			<button type="button">Info</button>
-			<button type="button">Kontakt</button>
-		</nav>
-		<div id="cursor" aria-hidden="true"></div>
+		<header>
+			<a class="wordmark" href="/">Julian Thurner</a>
+			<nav>
+				<a href="/" aria-current="page">Arbeiten</a>
+				<a href="/about">Über</a>
+				<a href="/kontakt">Kontakt</a>
+			</nav>
+		</header>
 
-		<script>
-			const canvas = document.getElementById("mass");
-			const gl = canvas.getContext("webgl", { antialias: false, alpha: false });
-			const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+		<main>
+			<section class="work" id="pendulum">
+				<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+					<circle cx="1150" cy="460" r="240" fill="var(--yellow)" />
+					<g class="swing">
+						<line x1="800" y1="0" x2="800" y2="430" stroke="var(--black)" stroke-width="5" />
+						<circle cx="800" cy="500" r="80" fill="var(--red)" />
+					</g>
+					<rect x="0" y="688" width="1600" height="7" fill="var(--black)" />
+				</svg>
+				<div class="meta"><span class="num">01</span><span class="tag">3D-Animation</span></div>
+				<h1>Pendulum</h1>
+			</section>
 
-			if (gl) {
-				const VERT = `
-					attribute vec2 a;
-					void main() { gl_Position = vec4(a, 0.0, 1.0); }
-				`;
+			<section class="work on-blue" id="mementum">
+				<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+					<circle cx="330" cy="700" r="70" fill="var(--yellow)" />
+					<g class="lean">
+						<rect x="550" y="430" width="70" height="330" fill="var(--paper)" />
+					</g>
+					<rect x="760" y="430" width="70" height="330" fill="var(--paper)" />
+					<rect x="970" y="430" width="70" height="330" fill="var(--paper)" />
+					<rect x="1180" y="430" width="70" height="330" fill="var(--paper)" opacity="0.55" />
+					<rect x="0" y="760" width="1600" height="7" fill="var(--paper)" />
+				</svg>
+				<div class="meta"><span class="num">02</span><span class="tag">3D-Animation</span></div>
+				<h1>Mementum</h1>
+			</section>
 
-				// Höhenfeld aus mehrfach ineinander verschobenem Rauschen (Domain Warping),
-				// beleuchtet wie ein Relief: Licht von oben links, Senken werden grau
-				const FRAG = `
-					precision highp float;
-					#define ZOOM 0.95
-					uniform vec2 u_res;
-					uniform float u_time;
-					uniform vec2 u_mouse;
-					uniform vec2 u_mvel;
-					uniform float u_mstr;
-					uniform float u_beat;
-					uniform vec4 u_btn[3];
-					uniform vec3 u_btnH;
+			<section class="work on-black" id="liquid-pattern">
+				<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+					<g class="turn">
+						<circle cx="800" cy="450" r="330" fill="none" stroke="var(--paper)" stroke-width="3" />
+						<circle cx="960" cy="330" r="150" fill="var(--blue)" />
+						<circle cx="640" cy="560" r="200" fill="none" stroke="var(--yellow)" stroke-width="5" />
+						<circle cx="700" cy="300" r="60" fill="var(--red)" />
+						<circle cx="1000" cy="600" r="26" fill="var(--yellow)" />
+						<circle cx="520" cy="420" r="8" fill="var(--paper)" />
+					</g>
+				</svg>
+				<div class="meta"><span class="num">03</span><span class="tag">Generative Art</span></div>
+				<h1>Liquid Pattern</h1>
+			</section>
 
-					vec2 hash(vec2 p) {
-						p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
-						return -1.0 + 2.0 * fract(sin(p) * 43758.5453123);
-					}
-					float noise(in vec2 p) {
-						vec2 i = floor(p), f = fract(p);
-						vec2 u = f * f * (3.0 - 2.0 * f);
-						return mix(
-							mix(dot(hash(i), f), dot(hash(i + vec2(1.0, 0.0)), f - vec2(1.0, 0.0)), u.x),
-							mix(dot(hash(i + vec2(0.0, 1.0)), f - vec2(0.0, 1.0)), dot(hash(i + vec2(1.0, 1.0)), f - vec2(1.0, 1.0)), u.x),
-							u.y);
-					}
-					float fbm(vec2 p) {
-						float v = 0.0, a = 0.5;
-						mat2 r = mat2(0.8, -0.6, 0.6, 0.8);
-						for (int i = 0; i < 3; i++) {
-							v += a * noise(p);
-							p = r * p * 2.03;
-							a *= 0.5;
-						}
-						return v;
-					}
+			<section class="work on-red" id="das-eventcatering">
+				<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+					<path d="M 560 620 A 240 240 0 0 1 1040 620 Z" fill="var(--paper)" />
+					<g class="floaty">
+						<path d="M 800 180 L 905 360 L 695 360 Z" fill="var(--black)" />
+					</g>
+					<circle cx="1120" cy="330" r="46" fill="var(--yellow)" />
+					<rect x="430" y="620" width="740" height="7" fill="var(--black)" />
+				</svg>
+				<div class="meta">
+					<span class="num">04</span><span class="tag">Corporate Design</span><span class="tag">Webdesign</span>
+				</div>
+				<h1>Das Eventcatering</h1>
+			</section>
+		</main>
 
-					// Abstand zu einer Pille (abgerundetes Rechteck)
-					float sdPill(vec2 q, vec2 b) {
-						vec2 d = abs(q) - b + b.y;
-						return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - b.y;
-					}
-
-					float height(in vec2 p) {
-						// Der Zeiger verformt das Feld selbst: Masse wird seitlich
-						// verdrängt und in Bewegungsrichtung mitgezogen
-						vec2 dm = p - u_mouse;
-						float infl = exp(-dot(dm, dm) * 5.0);
-						p -= dm * 0.55 * u_mstr * infl;
-						p -= u_mvel * infl;
-						// Nur die Wellen, keine zweite Ebene darunter: eine langsam
-						// driftende Quelle, ihre Ringe sind die ganze Oberfläche;
-						// das Schwellen steuert die Stärke
-						float amp = 0.7 + 0.5 * u_beat;
-						vec2 s1 = vec2(0.22 * sin(u_time * 0.4), 0.16 * cos(u_time * 0.53));
-						float d1 = length(p - s1);
-						float h = amp * 0.26 * sin(d1 * 30.0 - u_time * 7.0) * exp(-d1 * 0.7);
-						// breite, flache Wölbung unterm Zeiger
-						h += 0.08 * u_mstr * exp(-dot(dm, dm) * 2.5);
-						// Buttons: aus der Masse gewölbte Pillen mit weicher Schulter
-						for (int i = 0; i < 3; i++) {
-							float d = sdPill(p - u_btn[i].xy, u_btn[i].zw);
-							float lift = i == 0 ? u_btnH.x : (i == 1 ? u_btnH.y : u_btnH.z);
-							h += lift * 0.3 * (1.0 - smoothstep(-0.012, 0.02, d));
-						}
-						return h;
-					}
-
-					void main() {
-						vec2 p = (gl_FragCoord.xy - 0.5 * u_res) / u_res.y * ZOOM;
-						float e = 3.0 * ZOOM / u_res.y;
-
-						float h0 = height(p);
-						float hx = height(p + vec2(e, 0.0));
-						float hy = height(p + vec2(0.0, e));
-						float s = 0.34 * (1.0 + 0.3 * u_beat);
-						vec3 n = normalize(vec3((h0 - hx) / e * s, (h0 - hy) / e * s, 1.0));
-
-						vec3 L = normalize(vec3(-0.4, 0.55, 0.75));
-						float wrap = clamp(dot(n, L), 0.0, 1.0) * 0.5 + 0.5;
-						vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
-						float spec = pow(clamp(dot(n, H), 0.0, 1.0), 48.0);
-
-						float col = mix(0.68, 1.0, wrap);
-						col += spec * 0.09 + 0.012 * u_beat;
-						col *= 1.0 - 0.12 * smoothstep(0.15, -0.55, h0);
-
-						// Dithering gegen Streifen in den hellen Verläufen
-						float dith = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
-						col += (dith - 0.5) / 255.0 * 2.0;
-
-						gl_FragColor = vec4(vec3(col), 1.0);
-					}
-				`;
-
-				function compile(type, src) {
-					const s = gl.createShader(type);
-					gl.shaderSource(s, src);
-					gl.compileShader(s);
-					if (!gl.getShaderParameter(s, gl.COMPILE_STATUS))
-						console.error(gl.getShaderInfoLog(s));
-					return s;
-				}
-				const prog = gl.createProgram();
-				gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
-				gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
-				gl.linkProgram(prog);
-				gl.useProgram(prog);
-
-				gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
-				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-				const loc = gl.getAttribLocation(prog, "a");
-				gl.enableVertexAttribArray(loc);
-				gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-
-				const U = (n) => gl.getUniformLocation(prog, n);
-				const uRes = U("u_res"), uTime = U("u_time"), uMouse = U("u_mouse"), uMvel = U("u_mvel"), uMstr = U("u_mstr"), uBeat = U("u_beat");
-				const uBtn = U("u_btn[0]"), uBtnH = U("u_btnH");
-
-				// Buttons: Ruhehöhe 1, unter der Maus höher, gedrückt fast versenkt
-				const btnEls = Array.from(document.querySelectorAll(".dock button"));
-				const btnCur = [1, 1, 1], btnTgt = [1, 1, 1];
-				btnEls.forEach((b, i) => {
-					b.addEventListener("pointerenter", () => (btnTgt[i] = 1.35));
-					b.addEventListener("pointerleave", () => (btnTgt[i] = 1));
-					b.addEventListener("pointerdown", () => (btnTgt[i] = 0.12));
-				});
-				addEventListener("pointerup", () => {
-					for (let i = 0; i < 3; i++) if (btnTgt[i] < 1) btnTgt[i] = 1;
-					btnEls.forEach((b, i) => b.matches(":hover") && (btnTgt[i] = 1.35));
-				});
-				function btnUniforms() {
-					const cw = canvas.clientWidth, ch = canvas.clientHeight;
-					const flat = [];
-					for (const b of btnEls) {
-						const r = b.getBoundingClientRect();
-						flat.push(
-							((r.left + r.right) / 2 - cw / 2) / ch * zoom,
-							(ch / 2 - (r.top + r.bottom) / 2) / ch * zoom,
-							(r.width / 2 / ch) * zoom,
-							(r.height / 2 / ch) * zoom
-						);
-					}
-					gl.uniform4fv(uBtn, flat);
-					gl.uniform3f(uBtnH, btnCur[0], btnCur[1], btnCur[2]);
-				}
-
-				// Renderauflösung leicht reduziert: schneller, und die weichen
-				// Verläufe vertragen das Hochskalieren problemlos
-				const SCALE = 0.6;
-				function resize() {
-					const dpr = Math.min(devicePixelRatio || 1, 2) * SCALE;
-					canvas.width = Math.round(canvas.clientWidth * dpr);
-					canvas.height = Math.round(canvas.clientHeight * dpr);
-					gl.viewport(0, 0, canvas.width, canvas.height);
-				}
-				resize();
-				addEventListener("resize", resize);
-
-				// Zeiger träge nachführen; aus seiner Bewegung entsteht ein
-				// Geschwindigkeitsvektor, der die Masse mitzieht
-				const zoom = 0.95;
-				let tx = 0, ty = 0, cx = 0, cy = 0, tStr = 0, cStr = 0;
-				let tvx = 0, tvy = 0, cvx = 0, cvy = 0;
-				// Mauseinfluss vorerst abgeschaltet: die Masse bewegt sich nur von selbst
-				const MOUSE_INFLUENCE = false;
-				addEventListener("pointermove", (e) => {
-					if (!MOUSE_INFLUENCE) return;
-					const nx = ((e.clientX - canvas.clientWidth / 2) / canvas.clientHeight) * zoom;
-					const ny = ((canvas.clientHeight / 2 - e.clientY) / canvas.clientHeight) * zoom;
-					tvx += (nx - tx) * 4;
-					tvy += (ny - ty) * 4;
-					const m = Math.hypot(tvx, tvy);
-					if (m > 0.3) { tvx *= 0.3 / m; tvy *= 0.3 / m; }
-					tx = nx;
-					ty = ny;
-					tStr = 1;
-				});
-				document.documentElement.addEventListener("pointerleave", () => (tStr = 0));
-
-				// Organisches Schwellen statt Metronom: drei gegeneinander
-				// verstimmte Wellen ergeben unregelmäßige Hebungen verschiedener
-				// Stärke, wie Atmen oder Dynamik in Musik
-				function beatEnv(now) {
-					const t = now / 1000;
-					const s =
-						0.55 * Math.sin(t * 1.1) +
-						0.3 * Math.sin(t * 2.3 + 1.7) +
-						0.35 * Math.sin(t * 0.43 + 3.1);
-					const e = Math.min(1, Math.max(0, s));
-					return e * e;
-				}
-
-				function draw(now) {
-					cx += (tx - cx) * 0.06;
-					cy += (ty - cy) * 0.06;
-					cStr += (tStr - cStr) * 0.03;
-					cvx += (tvx - cvx) * 0.08;
-					cvy += (tvy - cvy) * 0.08;
-					tvx *= 0.94;
-					tvy *= 0.94;
-					gl.uniform1f(uBeat, reduceMotion ? 0 : beatEnv(now));
-					for (let i = 0; i < 3; i++) btnCur[i] += (btnTgt[i] - btnCur[i]) * 0.22;
-					btnUniforms();
-					gl.uniform2f(uRes, canvas.width, canvas.height);
-					gl.uniform1f(uTime, now / 1000);
-					gl.uniform2f(uMouse, cx, cy);
-					gl.uniform2f(uMvel, cvx, cvy);
-					gl.uniform1f(uMstr, cStr);
-					gl.drawArrays(gl.TRIANGLES, 0, 3);
-				}
-
-				if (reduceMotion) {
-					draw(0);
-				} else {
-					(function loop(now) {
-						draw(now);
-						requestAnimationFrame(loop);
-					})(0);
-				}
-			}
-
-			// Eigener Cursor, läuft auch ohne WebGL
-			const dot = document.getElementById("cursor");
-			if (matchMedia("(pointer: fine)").matches) {
-				let px = 0, py = 0, dx = 0, dy = 0, seen = false;
-				addEventListener("pointermove", (e) => {
-					px = e.clientX;
-					py = e.clientY;
-					if (!seen) {
-						seen = true;
-						dx = px;
-						dy = py;
-						dot.style.opacity = "1";
-					}
-					if (reduceMotion)
-						dot.style.transform = `translate(${px}px, ${py}px) translate(-50%, -50%)`;
-				});
-				document.documentElement.addEventListener("pointerleave", () => {
-					seen = false;
-					dot.style.opacity = "0";
-				});
-				if (!reduceMotion) {
-					(function follow() {
-						dx += (px - dx) * 0.22;
-						dy += (py - dy) * 0.22;
-						dot.style.transform = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) translate(-50%, -50%)`;
-						requestAnimationFrame(follow);
-					})();
-				}
-			}
-		</script>
+		<footer>
+			<span>© 2026 Julian Thurner</span>
+			<a href="mailto:me@julianthurner.com">me@julianthurner.com</a>
+		</footer>
 	</body>
 </html>
