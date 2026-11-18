@@ -421,8 +421,10 @@ body.listening .track.current .t-bar {
 	letter-spacing: -0.03em;
 }
 .reading article {
-	max-width: 30em;
-	margin-top: clamp(2rem, 8vh, 6rem);
+	/* Spalte endet an der Bildschirmmitte, bleibt auf kleinen
+	   Screens aber lesbar breit */
+	max-width: min(100%, max(18rem, calc(50vw - var(--pad))));
+	margin-top: clamp(1rem, 4vh, 3rem);
 }
 .reading h1 {
 	font-size: inherit;
