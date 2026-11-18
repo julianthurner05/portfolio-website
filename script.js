@@ -322,7 +322,7 @@ if (form) {
 
 // Leichtes Lenis-Smooth-Scrolling; die Snap-Startseite bleibt nativ
 let lenis = null;
-if (window.Lenis && !reduceMotion && !document.querySelector("main.snap")) {
+if (window.Lenis && !reduceMotion && !document.querySelector("main.snap") && !document.querySelector(".shelf")) {
 	lenis = new Lenis({ lerp: 0.14 });
 	(function raf(t) {
 		lenis.raf(t);
@@ -383,6 +383,7 @@ if (shelf) {
 			if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
 				shelf.scrollLeft += e.deltaY;
 				e.preventDefault();
+				e.stopPropagation();
 			}
 		},
 		{ passive: false }

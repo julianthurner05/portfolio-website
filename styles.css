@@ -473,9 +473,9 @@ body.listening .track.current {
 	position: absolute;
 	inset: 0;
 	display: flex;
+	align-items: center;
 	justify-content: center;
 	writing-mode: vertical-rl;
-	padding-top: 1.1rem;
 	font-family: "ABC Otto", Georgia, serif;
 	font-weight: 300;
 	font-size: 1.05rem;
@@ -484,11 +484,10 @@ body.listening .track.current {
 	overflow: hidden;
 }
 .book.lean {
+	/* lehnt nach links: der Fuß steht um h*sin(8°) vom Nachbarn ab,
+	   die Oberkante berührt ihn gerade — kein Überlappen */
 	transform: rotate(-8deg);
 	transform-origin: bottom left;
-	z-index: 1;
-	margin-left: 0.5rem;
-	margin-right: 2rem;
 }
 /* liegende, gestapelte Bücher */
 .stack {
@@ -499,8 +498,6 @@ body.listening .track.current {
 }
 .book.flat .spine {
 	writing-mode: horizontal-tb;
-	padding-top: 0;
-	align-items: center;
 }
 .b-blue { background: var(--blue); color: var(--paper); }
 .b-red { background: var(--red); color: var(--paper); }
@@ -593,7 +590,7 @@ form.contact button {
 		transform: rotate(7deg);
 	}
 }
-.lean {
+.hero .lean {
 	transform-origin: 620px 760px;
 	animation: lean 7s ease-in-out infinite alternate;
 }
