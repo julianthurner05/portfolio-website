@@ -1,4 +1,4 @@
-/* Reduziertes Bauhaus, Kandinsky-Farben */
+/* Reduziertes Bauhaus, Kandinsky-Farben — Aufbau nach der Webflow-Vorlage */
 
 @font-face {
 	font-family: "Neue Montreal";
@@ -43,109 +43,272 @@ body {
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 }
-
-/* Kopfzeile: eine Linie, links der Name, rechts drei Worte */
-header {
-	position: fixed;
-	inset: 0 0 auto 0;
-	z-index: 10;
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	padding: 0.9rem var(--pad);
-	background: var(--paper);
-	border-bottom: var(--line) solid var(--black);
-}
-.wordmark {
-	font-weight: 500;
-	letter-spacing: 0.01em;
-}
-header a {
-	color: inherit;
-	text-decoration: none;
-}
-header nav {
-	display: flex;
-	gap: clamp(1rem, 3vw, 2.5rem);
-	font-size: 0.95rem;
-}
-header nav a[aria-current="page"]::before {
-	content: "";
-	display: inline-block;
-	width: 0.55em;
-	height: 0.55em;
-	margin-right: 0.45em;
-	background: var(--red);
-}
-header nav a:hover {
-	text-decoration: underline;
-	text-underline-offset: 0.25em;
-}
-
-main {
-	padding-top: 3.4rem;
-}
-
-/* Arbeiten: eine Sektion pro Projekt, Farbe als Fläche */
-.work {
-	position: relative;
-	min-height: calc(100svh - 3.4rem);
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
-	padding: var(--pad);
-	border-bottom: var(--line) solid var(--black);
+body.menu-open {
 	overflow: hidden;
 }
-.work > svg {
+
+/* Pillen: die eine Grundform der Vorlage */
+.pill {
+	display: inline-block;
+	border: var(--line) solid currentColor;
+	border-radius: 999px;
+	padding: 0.5em 1.4em;
+	color: inherit;
+	text-decoration: none;
+	font-size: 0.95rem;
+	background: none;
+	font-family: inherit;
+	cursor: pointer;
+}
+.pill:hover {
+	background: var(--yellow);
+	color: var(--black);
+	border-color: var(--black);
+}
+
+/* Menü: runder Knopf oben rechts, schwarzes Vollbild-Overlay */
+.menu-btn {
+	position: fixed;
+	top: var(--pad);
+	right: var(--pad);
+	z-index: 30;
+	width: 52px;
+	height: 36px;
+	border: var(--line) solid var(--black);
+	border-radius: 999px;
+	background: var(--paper);
+	cursor: pointer;
+	display: grid;
+	place-items: center;
+	gap: 0;
+	padding: 0;
+}
+.menu-btn::before,
+.menu-btn::after {
+	content: "";
+	width: 18px;
+	height: var(--line);
+	background: var(--black);
+	margin: 2.5px 0;
+	transition: transform 0.25s ease;
+}
+body.menu-open .menu-btn::before {
+	transform: translateY(3.25px) rotate(45deg);
+}
+body.menu-open .menu-btn::after {
+	transform: translateY(-3.25px) rotate(-45deg);
+}
+.overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 20;
+	background: var(--black);
+	color: var(--paper);
+	display: grid;
+	align-content: end;
+	justify-items: start;
+	gap: 1rem;
+	padding: var(--pad);
+	visibility: hidden;
+	opacity: 0;
+	transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+body.menu-open .overlay {
+	visibility: visible;
+	opacity: 1;
+}
+.overlay a {
+	font-size: clamp(1.6rem, 4vw, 2.6rem);
+	font-weight: 500;
+	padding: 0.35em 1em;
+}
+.overlay a[aria-current="page"] {
+	color: var(--yellow);
+}
+
+/* Arbeiten: Vollbild-Hero, Titel unten links, Pille unten rechts */
+.hero {
+	position: relative;
+	min-height: 100svh;
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: var(--pad);
+	overflow: hidden;
+}
+.hero > svg {
 	position: absolute;
 	inset: 0;
 	width: 100%;
 	height: 100%;
 }
-.work .meta,
-.work h1 {
+.hero h1,
+.hero .more {
 	position: relative;
 	z-index: 1;
+}
+.hero h1 {
 	margin: 0;
-}
-.work .meta {
-	display: flex;
-	align-items: baseline;
-	gap: 1rem;
-}
-.num {
 	font-weight: 500;
-	font-size: 0.95rem;
-}
-.tag {
-	font-size: 0.8rem;
-	letter-spacing: 0.02em;
-	border: var(--line) solid currentColor;
-	border-radius: 999px;
-	padding: 0.25em 0.9em;
-}
-.work h1 {
-	font-weight: 500;
-	font-size: clamp(2.6rem, 8.5vw, 7.5rem);
+	font-size: clamp(2.8rem, 9vw, 8rem);
 	line-height: 0.95;
 	letter-spacing: -0.03em;
-	max-width: 14ch;
+	max-width: 12ch;
 }
-.work.on-blue {
+.hero .more {
+	flex: none;
+	margin-bottom: 0.6rem;
+}
+.hero.on-blue {
 	background: var(--blue);
 	color: var(--paper);
 }
-.work.on-black {
+.hero.on-black {
 	background: var(--black);
 	color: var(--paper);
 }
-.work.on-red {
+.hero.on-red {
 	background: var(--red);
 	color: var(--paper);
 }
 
-/* Kompositionen: wenig, langsam, abschaltbar */
+/* Infobox unter jedem Hero: Titel, Kategorie, zwei Textspalten */
+.infobox {
+	padding: calc(var(--pad) * 2) var(--pad);
+	border-bottom: var(--line) solid var(--black);
+	display: grid;
+	gap: 2.5rem;
+}
+.infobox h2 {
+	margin: 0;
+	font-weight: 500;
+	font-size: clamp(2rem, 5vw, 4rem);
+	line-height: 1;
+	letter-spacing: -0.02em;
+}
+.infobox .cat {
+	margin: 0.75rem 0 0;
+	font-size: 0.85rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+.infobox .cols {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+	gap: 2rem;
+	max-width: 72rem;
+}
+.infobox .cols p {
+	margin: 0;
+	max-width: 40rem;
+}
+
+/* Unterseiten */
+.page {
+	min-height: 100svh;
+	padding: var(--pad);
+	display: grid;
+	align-content: end;
+	gap: 2.5rem;
+}
+.page.center {
+	align-content: center;
+}
+.page h1 {
+	font-weight: 500;
+	font-size: clamp(2.6rem, 7vw, 6rem);
+	line-height: 0.95;
+	letter-spacing: -0.03em;
+	margin: 0;
+}
+.page .accent {
+	width: clamp(3rem, 8vw, 6rem);
+	height: clamp(3rem, 8vw, 6rem);
+}
+.page .cols {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+	gap: 2rem;
+	max-width: 70rem;
+}
+.page .cols p {
+	margin: 0;
+	max-width: 38rem;
+}
+.page a {
+	color: inherit;
+}
+
+/* Kontakt: große Zeilen-Labels, Linie statt Kasten, Senden unten rechts */
+form.contact {
+	display: grid;
+	gap: 2.4rem;
+	width: min(100%, 46rem);
+	margin-inline: auto;
+}
+form.contact label {
+	display: grid;
+	grid-template-columns: minmax(9ch, auto) 1fr;
+	align-items: end;
+	gap: 1.5rem;
+	font-size: clamp(1.4rem, 3vw, 2.1rem);
+	font-weight: 400;
+	letter-spacing: 0.02em;
+}
+form.contact input,
+form.contact textarea {
+	border: 0;
+	border-bottom: var(--line) solid var(--black);
+	background: none;
+	font: inherit;
+	font-size: 1.05rem;
+	color: inherit;
+	padding: 0.35em 0;
+	border-radius: 0;
+	min-width: 0;
+}
+form.contact textarea {
+	min-height: 6.5rem;
+	resize: vertical;
+}
+form.contact input:focus-visible,
+form.contact textarea:focus-visible {
+	outline: none;
+	border-bottom-color: var(--blue);
+	box-shadow: 0 var(--line) 0 0 var(--blue);
+}
+form.contact button {
+	justify-self: end;
+	font-size: 1.05rem;
+}
+
+@media (max-width: 540px) {
+	form.contact label {
+		grid-template-columns: 1fr;
+		align-items: start;
+		gap: 0.4rem;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.swing,
+	.lean,
+	.turn,
+	.floaty {
+		animation: none;
+	}
+	html {
+		scroll-behavior: auto;
+	}
+	.overlay,
+	.menu-btn::before,
+	.menu-btn::after {
+		transition: none;
+	}
+}
+
+/* Kompositionen: wenig, langsam */
 .swing {
 	transform-origin: 800px 0;
 	animation: swing 5.2s ease-in-out infinite alternate;
@@ -189,107 +352,6 @@ main {
 	to {
 		transform: translateY(-26px);
 	}
-}
-@media (prefers-reduced-motion: reduce) {
-	.swing,
-	.lean,
-	.turn,
-	.floaty {
-		animation: none;
-	}
-	html {
-		scroll-behavior: auto;
-	}
-}
-
-/* Unterseiten */
-.page {
-	min-height: calc(100svh - 3.4rem);
-	padding: var(--pad);
-	display: grid;
-	align-content: start;
-	gap: 2.5rem;
-}
-.page h1 {
-	font-weight: 500;
-	font-size: clamp(2.6rem, 7vw, 6rem);
-	line-height: 0.95;
-	letter-spacing: -0.03em;
-	margin: 0;
-}
-.page .accent {
-	width: clamp(3rem, 8vw, 6rem);
-	height: clamp(3rem, 8vw, 6rem);
-}
-.cols {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-	gap: 2rem;
-	max-width: 70rem;
-}
-.cols p {
-	margin: 0;
-	max-width: 38rem;
-}
-
-/* Kontaktformular: Linien statt Kästen */
-form.contact {
-	display: grid;
-	gap: 2rem;
-	max-width: 44rem;
-}
-form.contact label {
-	display: grid;
-	gap: 0.4rem;
-	font-size: 0.8rem;
-	letter-spacing: 0.08em;
-}
-form.contact input,
-form.contact textarea {
-	border: 0;
-	border-bottom: var(--line) solid var(--black);
-	background: none;
-	font: inherit;
-	color: inherit;
-	padding: 0.4em 0;
-	border-radius: 0;
-}
-form.contact textarea {
-	min-height: 7rem;
-	resize: vertical;
-}
-form.contact input:focus-visible,
-form.contact textarea:focus-visible {
-	outline: none;
-	border-bottom-color: var(--blue);
-	box-shadow: 0 var(--line) 0 0 var(--blue);
-}
-form.contact button {
-	justify-self: start;
-	border: var(--line) solid var(--black);
-	background: var(--yellow);
-	color: var(--black);
-	font: inherit;
-	font-weight: 500;
-	padding: 0.7em 2em;
-	border-radius: 999px;
-	cursor: pointer;
-}
-form.contact button:hover {
-	background: var(--black);
-	color: var(--paper);
-}
-
-footer {
-	display: flex;
-	justify-content: space-between;
-	gap: 1rem;
-	flex-wrap: wrap;
-	padding: 1rem var(--pad);
-	font-size: 0.85rem;
-}
-footer a {
-	color: inherit;
 }
 
 :focus-visible {

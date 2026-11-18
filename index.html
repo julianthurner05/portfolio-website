@@ -11,17 +11,15 @@
 		<link rel="stylesheet" href="styles.css" />
 	</head>
 	<body>
-		<header>
-			<a class="wordmark" href="/">Julian Thurner</a>
-			<nav>
-				<a href="/" aria-current="page">Arbeiten</a>
-				<a href="/about">Über</a>
-				<a href="/kontakt">Kontakt</a>
-			</nav>
-		</header>
+		<button class="menu-btn" aria-label="Menü" aria-expanded="false"></button>
+		<nav class="overlay" aria-label="Hauptmenü">
+			<a class="pill" href="/" aria-current="page">Arbeiten</a>
+			<a class="pill" href="/about">Über</a>
+			<a class="pill" href="/kontakt">Kontakt</a>
+		</nav>
 
 		<main>
-			<section class="work" id="pendulum">
+			<section class="hero" id="pendulum">
 				<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
 					<circle cx="1150" cy="460" r="240" fill="var(--yellow)" />
 					<g class="swing">
@@ -30,11 +28,27 @@
 					</g>
 					<rect x="0" y="688" width="1600" height="7" fill="var(--black)" />
 				</svg>
-				<div class="meta"><span class="num">01</span><span class="tag">3D-Animation</span></div>
 				<h1>Pendulum</h1>
+				<a class="pill more" href="#pendulum-info">Mehr erfahren</a>
+			</section>
+			<section class="infobox" id="pendulum-info">
+				<div>
+					<h2>Pendulum</h2>
+					<p class="cat">3D-Animation</p>
+				</div>
+				<div class="cols">
+					<p>
+						Platzhaltertext: Hier folgt die Beschreibung des Projekts — worum es
+						geht, wie es entstanden ist und was dabei herausgekommen ist.
+					</p>
+					<p>
+						Platzhaltertext: Hier folgen Details zu Werkzeugen, Ablauf und
+						Beteiligten, bis der echte Text fertig ist.
+					</p>
+				</div>
 			</section>
 
-			<section class="work on-blue" id="mementum">
+			<section class="hero on-blue" id="mementum">
 				<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
 					<circle cx="330" cy="700" r="70" fill="var(--yellow)" />
 					<g class="lean">
@@ -45,11 +59,27 @@
 					<rect x="1180" y="430" width="70" height="330" fill="var(--paper)" opacity="0.55" />
 					<rect x="0" y="760" width="1600" height="7" fill="var(--paper)" />
 				</svg>
-				<div class="meta"><span class="num">02</span><span class="tag">3D-Animation</span></div>
 				<h1>Mementum</h1>
+				<a class="pill more" href="#mementum-info">Mehr erfahren</a>
+			</section>
+			<section class="infobox" id="mementum-info">
+				<div>
+					<h2>Mementum</h2>
+					<p class="cat">3D-Animation</p>
+				</div>
+				<div class="cols">
+					<p>
+						Platzhaltertext: Hier folgt die Beschreibung des Projekts — worum es
+						geht, wie es entstanden ist und was dabei herausgekommen ist.
+					</p>
+					<p>
+						Platzhaltertext: Hier folgen Details zu Werkzeugen, Ablauf und
+						Beteiligten, bis der echte Text fertig ist.
+					</p>
+				</div>
 			</section>
 
-			<section class="work on-black" id="liquid-pattern">
+			<section class="hero on-black" id="liquid-pattern">
 				<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
 					<g class="turn">
 						<circle cx="800" cy="450" r="330" fill="none" stroke="var(--paper)" stroke-width="3" />
@@ -60,11 +90,27 @@
 						<circle cx="520" cy="420" r="8" fill="var(--paper)" />
 					</g>
 				</svg>
-				<div class="meta"><span class="num">03</span><span class="tag">Generative Art</span></div>
 				<h1>Liquid Pattern</h1>
+				<a class="pill more" href="#liquid-pattern-info">Mehr erfahren</a>
+			</section>
+			<section class="infobox" id="liquid-pattern-info">
+				<div>
+					<h2>Liquid Pattern</h2>
+					<p class="cat">Generative Art</p>
+				</div>
+				<div class="cols">
+					<p>
+						Platzhaltertext: Hier folgt die Beschreibung des Projekts — worum es
+						geht, wie es entstanden ist und was dabei herausgekommen ist.
+					</p>
+					<p>
+						Platzhaltertext: Hier folgen Details zu Werkzeugen, Ablauf und
+						Beteiligten, bis der echte Text fertig ist.
+					</p>
+				</div>
 			</section>
 
-			<section class="work on-red" id="das-eventcatering">
+			<section class="hero on-red" id="das-eventcatering">
 				<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
 					<path d="M 560 620 A 240 240 0 0 1 1040 620 Z" fill="var(--paper)" />
 					<g class="floaty">
@@ -73,16 +119,27 @@
 					<circle cx="1120" cy="330" r="46" fill="var(--yellow)" />
 					<rect x="430" y="620" width="740" height="7" fill="var(--black)" />
 				</svg>
-				<div class="meta">
-					<span class="num">04</span><span class="tag">Corporate Design</span><span class="tag">Webdesign</span>
-				</div>
 				<h1>Das Eventcatering</h1>
+				<a class="pill more" href="#das-eventcatering-info">Mehr erfahren</a>
+			</section>
+			<section class="infobox" id="das-eventcatering-info">
+				<div>
+					<h2>Das Eventcatering</h2>
+					<p class="cat">Corporate Design · Webdesign</p>
+				</div>
+				<div class="cols">
+					<p>
+						Platzhaltertext: Hier folgt die Beschreibung des Projekts — worum es
+						geht, wie es entstanden ist und was dabei herausgekommen ist.
+					</p>
+					<p>
+						Platzhaltertext: Hier folgen Details zu Werkzeugen, Ablauf und
+						Beteiligten, bis der echte Text fertig ist.
+					</p>
+				</div>
 			</section>
 		</main>
 
-		<footer>
-			<span>© 2026 Julian Thurner</span>
-			<a href="mailto:me@julianthurner.com">me@julianthurner.com</a>
-		</footer>
+		<script src="script.js"></script>
 	</body>
 </html>
