@@ -330,30 +330,45 @@ if (window.Lenis && !reduceMotion && !document.querySelector("main.snap")) {
 	})(performance.now());
 }
 
-// Eigener Cursor: schwarzer Punkt, der wie durch Watte hinterherzieht
+// Cursor-Duo: der Punkt folgt zügig, der Ring zieht wie durch
+// Watte hinterher; über Links wächst der Ring, beim Klick zuckt er
 const dot = document.getElementById("cursor");
-if (dot && matchMedia("(pointer: fine)").matches) {
-	let px = 0, py = 0, dx = 0, dy = 0, seen = false;
+const ring = document.getElementById("cursor-ring");
+if (dot && ring && matchMedia("(pointer: fine)").matches) {
+	let px = 0, py = 0, dx = 0, dy = 0, rx = 0, ry = 0, seen = false;
+	const place = (el, x, y) =>
+		(el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -50%)`);
 	addEventListener("pointermove", (e) => {
 		px = e.clientX;
 		py = e.clientY;
 		if (!seen) {
 			seen = true;
-			dx = px;
-			dy = py;
+			dx = rx = px;
+			dy = ry = py;
 			dot.style.opacity = "1";
+			ring.style.opacity = "1";
 		}
-		if (reduceMotion) dot.style.transform = `translate(${px}px, ${py}px) translate(-50%, -50%)`;
+		document.body.classList.toggle("cursor-hover", !!e.target.closest("a, button"));
+		if (reduceMotion) {
+			place(dot, px, py);
+			place(ring, px, py);
+		}
 	});
 	document.documentElement.addEventListener("pointerleave", () => {
 		seen = false;
 		dot.style.opacity = "0";
+		ring.style.opacity = "0";
 	});
+	addEventListener("pointerdown", () => document.body.classList.add("cursor-down"));
+	addEventListener("pointerup", () => document.body.classList.remove("cursor-down"));
 	if (!reduceMotion) {
 		(function follow() {
-			dx += (px - dx) * 0.07;
-			dy += (py - dy) * 0.07;
-			dot.style.transform = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) translate(-50%, -50%)`;
+			dx += (px - dx) * 0.4;
+			dy += (py - dy) * 0.4;
+			rx += (px - rx) * 0.12;
+			ry += (py - ry) * 0.12;
+			place(dot, dx, dy);
+			place(ring, rx, ry);
 			requestAnimationFrame(follow);
 		})();
 	}

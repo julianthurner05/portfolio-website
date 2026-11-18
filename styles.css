@@ -94,10 +94,12 @@ body.listening {
 .topbar a {
 	color: inherit;
 	text-decoration: none;
+	/* Hover wird weich fetter: animierte Kontur statt Schnittwechsel */
+	-webkit-text-stroke: 0px currentColor;
+	transition: -webkit-text-stroke-width 0.3s ease;
 }
 .topbar a:hover {
-	text-decoration: underline;
-	text-underline-offset: 0.25em;
+	-webkit-text-stroke-width: 0.55px;
 }
 .topbar nav {
 	position: absolute;
@@ -571,30 +573,53 @@ form.contact button {
 	}
 }
 
-/* Eigener Cursor: schwarzer Punkt, zieht wie durch Watte hinterher */
+/* Cursor-Duo: schneller Punkt, träger Ring, beides invertiert
+   über dem Untergrund; der Systemzeiger ist komplett aus */
 @media (pointer: fine) {
-	html,
-	body,
-	a,
-	button {
-		cursor: none;
+	*,
+	*::before,
+	*::after {
+		cursor: none !important;
 	}
 }
-#cursor {
+#cursor,
+#cursor-ring {
 	position: fixed;
 	top: 0;
 	left: 0;
-	width: 10px;
-	height: 10px;
 	border-radius: 50%;
-	background: var(--black);
 	pointer-events: none;
-	opacity: 0;
-	transition: opacity 0.3s ease;
 	z-index: 40;
+	mix-blend-mode: difference;
+	opacity: 0;
+}
+#cursor {
+	width: 8px;
+	height: 8px;
+	background: #fff;
+	transition: opacity 0.3s ease, width 0.25s ease, height 0.25s ease;
+}
+#cursor-ring {
+	width: 36px;
+	height: 36px;
+	border: 1.5px solid #fff;
+	transition: opacity 0.3s ease, width 0.25s ease, height 0.25s ease;
+}
+body.cursor-hover #cursor-ring {
+	width: 56px;
+	height: 56px;
+}
+body.cursor-hover #cursor {
+	width: 5px;
+	height: 5px;
+}
+body.cursor-down #cursor-ring {
+	width: 26px;
+	height: 26px;
 }
 @media (pointer: coarse) {
-	#cursor {
+	#cursor,
+	#cursor-ring {
 		display: none;
 	}
 }
