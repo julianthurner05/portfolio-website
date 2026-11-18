@@ -641,7 +641,6 @@ body.listening .track.current {
 }
 .media-hero h1 {
 	font-size: clamp(1.9rem, 4vw, 3.2rem);
-	font-weight: 400;
 }
 .media-hero .infobox {
 	z-index: 3;
@@ -698,7 +697,6 @@ form.contact {
 	display: grid;
 	gap: 2.4rem;
 	width: min(100%, 46rem);
-	margin-inline: auto;
 }
 form.contact label {
 	display: grid;

@@ -41,10 +41,25 @@
 						arbeitet und was ihn interessiert — der Text entsteht gerade.
 					</p>
 					<p>
-						Bis dahin erzählen die <a href="/">Arbeiten</a> am meisten. Für
-						alles andere: <a href="/kontakt">schreib mir</a>.
+						Für alles andere: <a href="#kontakt">schreib mir</a>.
 					</p>
 				</div>
+			<!-- Kein Server dahinter: Absenden öffnet das Mailprogramm -->
+				<form class="contact" id="kontakt">
+					<label
+						>NAME
+						<input type="text" name="name" autocomplete="name" required />
+					</label>
+					<label
+						>E-MAIL
+						<input type="email" name="email" autocomplete="email" required />
+					</label>
+					<label
+						>NACHRICHT
+						<textarea name="message" required></textarea>
+					</label>
+					<button type="submit" class="pill">Senden</button>
+				</form>
 			</div>
 		</main>
 
