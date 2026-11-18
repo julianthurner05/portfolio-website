@@ -126,10 +126,17 @@ body.menu-open .overlay {
 	color: var(--yellow);
 }
 
-/* Arbeiten: Vollbild-Hero, Titel unten links, Pille unten rechts */
+/* Arbeiten: Scroll-Container, in dem jede Sektion einrastet */
+main.snap {
+	height: 100svh;
+	overflow-y: auto;
+	scroll-snap-type: y mandatory;
+	overscroll-behavior: none;
+}
 .hero {
+	scroll-snap-align: start;
 	position: relative;
-	min-height: 100svh;
+	height: 100svh;
 	display: flex;
 	align-items: flex-end;
 	justify-content: space-between;
@@ -173,25 +180,61 @@ body.menu-open .overlay {
 	color: var(--paper);
 }
 
-/* Infobox unter jedem Hero: Titel, Kategorie, zwei Textspalten */
+/* Infobox: Panel, das im Hero von unten hochfährt;
+   oben bleibt ein Streifen des Bilds sichtbar */
 .infobox {
-	padding: calc(var(--pad) * 2) var(--pad);
-	border-bottom: var(--line) solid var(--black);
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: calc(100% - 3.5rem);
+	z-index: 2;
+	background: var(--paper);
+	color: var(--black);
+	border-radius: 14px 14px 0 0;
+	padding: var(--pad);
 	display: grid;
+	align-content: start;
 	gap: 2.5rem;
+	overflow-y: auto;
+	transform: translateY(103%);
+	transition: transform 0.5s cubic-bezier(0.33, 1, 0.36, 1);
+}
+.hero.open .infobox {
+	transform: translateY(0);
+}
+.infobox-head {
+	display: flex;
+	align-items: center;
+	gap: 1.25rem;
 }
 .infobox h2 {
 	margin: 0;
 	font-weight: 500;
-	font-size: clamp(2rem, 5vw, 4rem);
+	font-size: clamp(1.8rem, 4vw, 3.2rem);
 	line-height: 1;
 	letter-spacing: -0.02em;
 }
-.infobox .cat {
-	margin: 0.75rem 0 0;
-	font-size: 0.85rem;
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
+.infobox .tag {
+	font-size: 0.8rem;
+	letter-spacing: 0.04em;
+	border: var(--line) solid var(--black);
+	border-radius: 999px;
+	padding: 0.3em 1em;
+}
+.infobox .close {
+	margin-left: auto;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	font-size: 1.8rem;
+	line-height: 1;
+	cursor: pointer;
+	padding: 0.2em 0.4em;
+}
+.infobox .close:hover {
+	color: var(--red);
 }
 .infobox .cols {
 	display: grid;
@@ -303,7 +346,8 @@ form.contact button {
 	}
 	.overlay,
 	.menu-btn::before,
-	.menu-btn::after {
+	.menu-btn::after,
+	.infobox {
 		transition: none;
 	}
 }

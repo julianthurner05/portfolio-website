@@ -5,11 +5,32 @@ btn.addEventListener("click", () => {
 	btn.setAttribute("aria-expanded", open);
 });
 addEventListener("keydown", (e) => {
-	if (e.key === "Escape" && document.body.classList.contains("menu-open")) {
+	if (e.key !== "Escape") return;
+	if (document.body.classList.contains("menu-open")) {
 		document.body.classList.remove("menu-open");
 		btn.setAttribute("aria-expanded", "false");
 	}
+	for (const hero of document.querySelectorAll(".hero.open")) {
+		hero.classList.remove("open");
+		hero.querySelector(".more").setAttribute("aria-expanded", "false");
+	}
 });
+
+// Infobox-Panel pro Projekt: fährt von unten hoch, X schließt
+for (const hero of document.querySelectorAll(".hero")) {
+	const more = hero.querySelector(".more");
+	const close = hero.querySelector(".close");
+	if (!more || !close) continue;
+	more.addEventListener("click", () => {
+		hero.classList.add("open");
+		more.setAttribute("aria-expanded", "true");
+	});
+	close.addEventListener("click", () => {
+		hero.classList.remove("open");
+		more.setAttribute("aria-expanded", "false");
+		more.focus();
+	});
+}
 
 // Kontakt: baut aus den Feldern eine Mail und öffnet das Mailprogramm
 const form = document.querySelector("form.contact");
