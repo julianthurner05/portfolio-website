@@ -35,8 +35,7 @@ if (trackList.length) {
 	let barCur = 0;
 	const stopRow = (li) => {
 		btnOf(li).textContent = "play";
-		li.style.setProperty("--p", "0%");
-		barCur = 0;
+		// die Linie bleibt stehen: gehörte Spuren behalten ihren Fortschritt
 	};
 	// Playbar extrem weich: die Linie läuft dem echten Stand träge nach
 	(function bar() {
@@ -270,7 +269,11 @@ if (trackList.length) {
 		viz && viz.stop();
 	};
 	audio.addEventListener("ended", () => {
-		if (current) stopRow(current);
+		if (current) {
+			stopRow(current);
+			current.style.setProperty("--p", "100%");
+			current._t = 0;
+		}
 		current = null;
 		exitListening();
 	});
@@ -285,12 +288,24 @@ if (trackList.length) {
 			}
 			if (current && current !== li) {
 				stopRow(current);
+				current._t = audio.currentTime;
 				current.classList.remove("current");
 				current.style.transform = "";
 			}
 			if (current !== li) {
 				current = li;
 				audio.src = li.dataset.src;
+				// dort weitermachen, wo die Spur zuletzt stand
+				if (li._t) {
+					audio.addEventListener(
+						"loadedmetadata",
+						() => {
+							if (li._t < audio.duration - 1) audio.currentTime = li._t;
+						},
+						{ once: true }
+					);
+				}
+				barCur = parseFloat(li.style.getPropertyValue("--p")) || 0;
 			}
 			audio.play().then(
 				() => {
