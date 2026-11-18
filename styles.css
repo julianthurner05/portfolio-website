@@ -434,9 +434,10 @@ body.listening .track.current {
 /* Bücherregal: horizontal scrollbar, jeder Text ein stilisierter
    Buchrücken; manche lehnen an ihren Nachbarn */
 .shelf-page {
-	min-height: 100svh;
+	/* die Bücher stehen auf der unteren Viewport-Kante */
+	height: 100svh;
 	display: grid;
-	align-content: center;
+	align-content: end;
 }
 .shelf {
 	overflow-x: auto;
@@ -452,7 +453,6 @@ body.listening .track.current {
 	gap: 0.5rem;
 	width: max-content;
 	padding: 3rem 12vw 0;
-	border-bottom: 6px solid var(--black);
 }
 .book {
 	position: relative;
