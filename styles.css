@@ -461,7 +461,7 @@ body.listening .track.current {
 	align-items: flex-end;
 	gap: 0.5rem;
 	width: max-content;
-	padding: 3rem 12vw 0;
+	padding: 3rem 12vw 0 0;
 }
 .book {
 	position: relative;
