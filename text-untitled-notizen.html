@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="de">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="robots" content="noindex" />
+		<title>untitled (Notizen) – Julian Thurner</title>
+		<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+		<link rel="icon" href="favicon.png" type="image/png" sizes="96x96" />
+		<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+		<link rel="preload" href="fonts/NeueMontreal-Light.otf" as="font" type="font/otf" crossorigin />
+		<link rel="preload" href="fonts/NeueMontreal-Regular.otf" as="font" type="font/otf" crossorigin />
+		<link rel="preload" href="fonts/NeueMontreal-Medium.otf" as="font" type="font/otf" crossorigin />
+		<link rel="preload" href="fonts/NeueMontreal-Bold.otf" as="font" type="font/otf" crossorigin />
+		<link rel="preload" href="fonts/ABCOtto-Light-Trial.otf" as="font" type="font/otf" crossorigin />
+		<link rel="preload" href="fonts/ABCOtto-LightItalic-Trial.otf" as="font" type="font/otf" crossorigin />
+		<link rel="stylesheet" href="styles.css" />
+	</head>
+	<body>
+		<header class="topbar">
+			<span class="wordmark">Julian Thurner</span>
+			<nav>
+				<a href="/musik">Musik</a>
+				<a href="/design">Design</a>
+				<a href="/text" aria-current="page">Text</a>
+			</nav>
+			<a href="/about">Über mich</a>
+		</header>
+		<div id="cursor" aria-hidden="true"></div>
+		<div id="cursor-ring" aria-hidden="true"></div>
+
+		<button class="shelf-return" data-href="/text" aria-label="Zurück zu den Texten">
+				<div class="shelf-row">
+					<div class="book b-red" style="width: 10rem; height: 68svh">
+						<span class="spine s-italic">Die Figur, die ich spiele</span><span class="note">2026</span>
+					</div>
+					<div class="book b-paper" style="width: 8rem; height: 55svh">
+						<span class="spine s-sans s-big">Ich werde ich</span>
+					</div>
+					<div class="book b-black" style="width: 11rem; height: 80svh">
+						<span class="spine s-sans s-big s-caps">Zweitbesetzung</span>
+					</div>
+					<div class="book b-yellow lean" style="width: 7rem; height: 50svh; margin-left: calc(7svh - 0.5rem); margin-right: 0.5rem">
+						<span class="spine s-italic">Tag für Tag</span>
+					</div>
+					<div class="book b-paper" style="width: 9rem; height: 63svh">
+						<span class="spine s-up">Briefe, ungeschickt</span>
+					</div>
+					<div class="book b-blue" style="width: 6.5rem; height: 46svh">
+						<span class="spine s-sans">Wasserzeichen</span><span class="note">2025</span>
+					</div>
+					<div class="stack">
+						<div class="book b-black flat" style="width: 24rem; height: 4.8rem; margin-right: 1.2rem">
+							<span class="spine s-sans s-big s-caps">Stille Post</span>
+						</div>
+						<div class="book b-paper flat" style="width: 21rem; height: 4.2rem; margin-left: 1.4rem">
+							<span class="spine s-big s-italic">Rückspiegel</span>
+						</div>
+						<div class="book b-yellow flat" style="width: 22.5rem; height: 4.5rem">
+							<span class="spine">Notiz an die Nacht</span>
+						</div>
+					</div>
+					<div class="book b-paper" style="width: 10.5rem; height: 86svh">
+						<span class="spine s-big">untitled (Notizen)</span>
+					</div>
+					<div class="book b-black lean" style="width: 8.5rem; height: 58svh; margin-left: calc(8.1svh - 0.5rem); margin-right: 0.5rem">
+						<span class="spine s-sans s-up">Vorhang, kaum offen</span>
+					</div>
+					<div class="book b-blue" style="width: 7.5rem; height: 52svh">
+						<span class="spine s-sans">Lebensabschnittsstimmung</span><span class="note">2024</span>
+					</div>
+					<div class="stack">
+						<div class="book b-red flat" style="width: 20rem; height: 4.2rem; margin-left: 1rem">
+							<span class="spine s-big s-caps">Zugabe</span>
+						</div>
+						<div class="book b-paper flat" style="width: 22rem; height: 4.5rem">
+							<span class="spine s-sans">Unterwasserbrief</span>
+						</div>
+						<div class="egg" aria-hidden="true"></div>
+					</div>
+				</div>
+		</button>
+
+		<main>
+			<div class="page reading">
+				<article>
+					<h1>untitled <span class="paren">(</span>Notizen<span class="paren">)</span></h1>
+					<p>
+						Ein Pfarrer schreibt von Blasphemie, das Kind behält doch lieber sein Gewand. Seine Nachricht geht hinab bis an die höchsten Töne, was Gott will ist was ich sag, und wenn der Wille sich nicht beugt, erlebt der Junge keinen nächsten Tag. So der liebe Gott. Die angebahnte Unruhe ist nun unvermeidlich, wer nicht will, kommt auch noch dran. Das ganze Dorf ruft auf zur Jagd nach diesem jungen Hexerich, und so ist Gott am Werk, und Gottes Werk beendet diese heiße Gschicht.
+					</p>
+				</article>
+			</div>
+		</main>
+
+		<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+		<script src="script.js"></script>
+	</body>
+</html>

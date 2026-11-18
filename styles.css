@@ -5,28 +5,28 @@
 	src: url("fonts/NeueMontreal-Light.otf") format("opentype");
 	font-weight: 300;
 	font-style: normal;
-	font-display: swap;
+	font-display: block;
 }
 @font-face {
 	font-family: "Neue Montreal";
 	src: url("fonts/NeueMontreal-Regular.otf") format("opentype");
 	font-weight: 400;
 	font-style: normal;
-	font-display: swap;
+	font-display: block;
 }
 @font-face {
 	font-family: "Neue Montreal";
 	src: url("fonts/NeueMontreal-Medium.otf") format("opentype");
 	font-weight: 500;
 	font-style: normal;
-	font-display: swap;
+	font-display: block;
 }
 @font-face {
 	font-family: "Neue Montreal";
 	src: url("fonts/NeueMontreal-Bold.otf") format("opentype");
 	font-weight: 700;
 	font-style: normal;
-	font-display: swap;
+	font-display: block;
 }
 
 :root {
@@ -404,19 +404,21 @@ body.listening .track.current {
 	src: url("fonts/ABCOtto-Light-Trial.otf") format("opentype");
 	font-weight: 300;
 	font-style: normal;
-	font-display: swap;
+	font-display: block;
 }
 @font-face {
 	font-family: "ABC Otto";
 	src: url("fonts/ABCOtto-LightItalic-Trial.otf") format("opentype");
 	font-weight: 300;
 	font-style: italic;
-	font-display: swap;
+	font-display: block;
 }
 
 /* Leseseite: Serife, ruhige Spalte, Titel in Textgröße */
 .reading {
 	display: block;
+	/* align-content wirkt neuerdings auch auf Block-Container */
+	align-content: start;
 	font-family: "ABC Otto", Georgia, "Times New Roman", serif;
 	font-weight: 300;
 	font-size: clamp(1.25rem, 2.3vw, 2rem);
