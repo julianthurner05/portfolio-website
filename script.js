@@ -1,15 +1,8 @@
-// Menü-Overlay auf/zu, Escape schließt
-const btn = document.querySelector(".menu-btn");
-btn.addEventListener("click", () => {
-	const open = document.body.classList.toggle("menu-open");
-	btn.setAttribute("aria-expanded", open);
-});
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// Escape schließt offene Infobox-Panels
 addEventListener("keydown", (e) => {
 	if (e.key !== "Escape") return;
-	if (document.body.classList.contains("menu-open")) {
-		document.body.classList.remove("menu-open");
-		btn.setAttribute("aria-expanded", "false");
-	}
 	for (const hero of document.querySelectorAll(".hero.open")) {
 		hero.classList.remove("open");
 		hero.querySelector(".more").setAttribute("aria-expanded", "false");
@@ -39,10 +32,21 @@ if (trackList.length) {
 	const audio = new Audio();
 	let current = null;
 	const btnOf = (li) => li.querySelector(".t-btn");
+	let barCur = 0;
 	const stopRow = (li) => {
 		btnOf(li).textContent = "play";
 		li.style.setProperty("--p", "0%");
+		barCur = 0;
 	};
+	// Playbar extrem weich: die Linie läuft dem echten Stand träge nach
+	(function bar() {
+		if (current && audio.duration) {
+			const t = (audio.currentTime / audio.duration) * 100;
+			barCur += (t - barCur) * 0.06;
+			current.style.setProperty("--p", barCur.toFixed(3) + "%");
+		}
+		requestAnimationFrame(bar);
+	})();
 
 	// Hörmodus: Liste blendet aus, die laufende Zeile rückt in die
 	// Bildschirmmitte, dahinter läuft ein audio-reaktives p5-Visual.
@@ -64,9 +68,10 @@ if (trackList.length) {
 			return s / ((b - a) * 255);
 		};
 
-		// Fünf Programme, je Track eines (Index modulo fünf) — alle hell
-		// und nah an der ersten Fassung: Formen auf fast Weiß
+		// Fünf Programme, je Track eines (Index modulo fünf) — alle aus
+		// ganz kleinen Punkten auf fast Weiß, jedes in anderer Formation
 		const PAPER = "#fcfcfc", BLUE = "#2440c9", RED = "#e8401c", YELLOW = "#f5c518", BLACK = "#141414";
+		const COLS = [BLUE, RED, YELLOW, BLACK];
 		const kreise = () => {
 			let t = 0;
 			return {
@@ -75,100 +80,93 @@ if (trackList.length) {
 					s.background(PAPER);
 					const cx = s.width / 2, cy = s.height / 2;
 					const u = Math.min(s.width, s.height);
-					t += 0.0025 + lv.low * 0.004;
-					s.noFill();
-					s.stroke(BLACK);
-					s.strokeWeight(2);
-					s.circle(cx, cy, u * (0.55 + lv.low * 0.12));
+					t += 0.0012 + lv.low * 0.002;
 					s.noStroke();
-					s.fill(BLUE);
-					s.circle(cx + Math.cos(t) * u * 0.22, cy + Math.sin(t) * u * 0.18, u * (0.16 + lv.low * 0.22));
-					s.fill(RED);
-					s.circle(cx + Math.cos(-t * 1.7 + 2) * u * 0.3, cy + Math.sin(-t * 1.7 + 2) * u * 0.24, u * (0.08 + lv.mid * 0.18));
-					s.fill(YELLOW);
-					s.circle(cx + Math.cos(t * 2.6 + 4) * u * 0.36, cy + Math.sin(t * 2.6 + 4) * u * 0.3, u * (0.045 + lv.high * 0.14));
+					const ringe = [
+						[0.16, BLUE, lv.low, 24, 1],
+						[0.28, RED, lv.mid, 38, -0.55],
+						[0.4, YELLOW, lv.high, 52, 0.35],
+						[0.52, BLACK, lv.mid, 68, -0.2],
+					];
+					for (const [rr, col, e, n, sp] of ringe) {
+						s.fill(col);
+						for (let i = 0; i < n; i++) {
+							const a = t * sp * 5 + (i / n) * s.TWO_PI;
+							const w = bins[(i * 3) % bins.length] / 255;
+							s.circle(cx + Math.cos(a) * u * rr, cy + Math.sin(a) * u * rr, 2 + e * 5 + w * 4);
+						}
+					}
 					s.fill(BLACK);
-					s.circle(cx, cy, u * (0.012 + lv.mid * 0.02));
+					s.circle(cx, cy, 3 + lv.low * 8);
 				},
 			};
 		};
-		const ringe = () => {
+		const puls = () => {
 			let rings = [], cool = 0;
 			return {
 				init() { rings = []; cool = 0; },
 				draw(s, lv) {
 					s.background(PAPER);
-					const u = Math.min(s.width, s.height);
-					if (lv.low > 0.4 && cool <= 0) { rings.push(0); cool = 12; }
-					cool--;
-					rings = rings.filter((r) => r < s.width * 1.3);
-					s.noFill();
-					s.stroke(BLACK);
-					s.strokeWeight(1.5);
-					for (let i = 0; i < rings.length; i++) {
-						rings[i] += 2.5 + lv.low * 9;
-						s.circle(s.width / 2, s.height / 2, rings[i]);
+					const cx = s.width / 2, cy = s.height / 2;
+					if (lv.low > 0.4 && cool <= 0) {
+						rings.push([0, COLS[rings.length % 4]]);
+						cool = 12;
 					}
-					s.stroke(BLUE);
-					s.strokeWeight(3);
-					s.circle(s.width / 2, s.height / 2, u * (0.3 + lv.mid * 0.14));
-					s.stroke(YELLOW);
-					s.circle(s.width / 2, s.height / 2, u * (0.46 + lv.high * 0.1));
+					cool--;
+					rings = rings.filter((r) => r[0] < s.width * 0.8);
 					s.noStroke();
-					s.fill(RED);
-					s.circle(s.width / 2, s.height / 2, u * (0.03 + lv.low * 0.06));
+					for (const r of rings) {
+						r[0] += 1.5 + lv.low * 6;
+						const n = Math.max(14, Math.floor(r[0] / 7));
+						s.fill(r[1]);
+						for (let i = 0; i < n; i++) {
+							const a = (i / n) * s.TWO_PI;
+							s.circle(cx + Math.cos(a) * r[0], cy + Math.sin(a) * r[0], 2 + lv.mid * 4);
+						}
+					}
+					s.fill(BLACK);
+					s.circle(cx, cy, 3 + lv.low * 9);
 				},
 			};
 		};
 		const raster = () => {
-			const cols = [BLUE, YELLOW, RED, BLACK];
 			return {
-				init(s) { s.rectMode(s.CENTER); },
+				init() {},
 				draw(s, lv) {
 					s.background(PAPER);
-					const n = 11, c = s.width / n, m = Math.ceil(s.height / c);
+					const n = 26, c = s.width / n, m = Math.ceil(s.height / c);
 					s.noStroke();
 					let k = 0;
 					for (let y = 0; y < m; y++)
 						for (let x = 0; x < n; x++) {
-							const e = bins[(k * 7) % bins.length] / 255;
-							s.push();
-							s.translate(x * c + c / 2, y * c + c / 2);
-							s.rotate(s.frameCount * 0.006 + e * s.HALF_PI);
-							s.fill(cols[k % 4]);
-							const d = c * (0.08 + e * 0.5);
-							s.rect(0, 0, d, d);
-							s.pop();
+							const e = bins[(k * 5) % bins.length] / 255;
+							s.fill(COLS[(x + y) % 4]);
+							s.circle(x * c + c / 2, y * c + c / 2, 1.2 + e * 6);
 							k++;
 						}
 				},
 			};
 		};
 		const wellen = () => {
-			const cols = [BLACK, BLUE, RED, YELLOW];
 			return {
 				init() {},
 				draw(s, lv) {
 					s.background(PAPER);
-					const rows = 7;
-					s.noFill();
-					s.strokeWeight(2);
+					const rows = 6;
+					s.noStroke();
 					for (let r = 0; r < rows; r++) {
 						const y0 = (s.height * (r + 1)) / (rows + 1);
-						s.stroke(cols[r % 4]);
-						s.beginShape();
-						for (let i = 0; i < wave.length; i += 6) {
+						s.fill(COLS[r % 4]);
+						for (let i = 0; i < wave.length; i += 10) {
 							const x = (i / wave.length) * s.width;
 							const amp = (0.25 + r * 0.1) * (0.4 + lv.mid * 1.4);
-							s.vertex(x, y0 + (wave[(i + r * 60) % wave.length] - 128) * amp);
+							s.circle(x, y0 + (wave[(i + r * 60) % wave.length] - 128) * amp, 2 + lv.high * 4);
 						}
-						s.endShape();
 					}
 				},
 			};
 		};
 		const orbits = () => {
-			const cols = [BLUE, RED, YELLOW, BLACK];
 			return {
 				init() {},
 				draw(s, lv) {
@@ -176,17 +174,17 @@ if (trackList.length) {
 					const cx = s.width / 2, cy = s.height / 2;
 					const u = Math.min(s.width, s.height);
 					s.noStroke();
-					for (let i = 0; i < 70; i++) {
+					for (let i = 0; i < 80; i++) {
 						const e = bins[i % bins.length] / 255;
 						const a = s.frameCount * (0.002 + i * 0.0004) + i;
-						const r = u * 0.06 + i * u * 0.008;
-						s.fill(cols[i % 4]);
-						s.circle(cx + Math.cos(a) * r, cy + Math.sin(a) * r * 0.75, 3 + e * 22);
+						const r = u * 0.05 + i * u * 0.0072;
+						s.fill(COLS[i % 4]);
+						s.circle(cx + Math.cos(a) * r, cy + Math.sin(a) * r * 0.75, 2 + e * 8);
 					}
 				},
 			};
 		};
-		const progs = [kreise(), ringe(), raster(), wellen(), orbits()];
+		const progs = [kreise(), puls(), raster(), wellen(), orbits()];
 		let prog = null;
 		let sk = null;
 		new p5((s) => {
@@ -221,23 +219,32 @@ if (trackList.length) {
 			},
 		};
 	}
+	let moveTimer = 0;
 	const enterListening = (li) => {
 		ensureViz();
 		li.classList.add("current");
-		// die Zeile rückt vertikal in die Mitte; Layout-Position statt
-		// getBoundingClientRect, damit ein noch laufender Transform
-		// die Messung nicht verfälscht
-		let y = 0;
-		for (let el = li; el; el = el.offsetParent) y += el.offsetTop;
-		const center = y - scrollY + li.offsetHeight / 2;
-		li.style.transform = `translateY(${Math.round(innerHeight / 2 - center)}px)`;
 		document.body.classList.add("listening");
-		viz && viz.start(li);
+		// Jukebox: erst blendet der Rest der Liste aus, dann erst fährt
+		// der Titel in die Mitte und das Visual kommt dazu
+		clearTimeout(moveTimer);
+		moveTimer = setTimeout(() => {
+			// Layout-Position statt getBoundingClientRect, damit ein noch
+			// laufender Transform die Messung nicht verfälscht
+			let y = 0;
+			for (let el = li; el; el = el.offsetParent) y += el.offsetTop;
+			const center = y - scrollY + li.offsetHeight / 2;
+			li.style.transform = `translateY(${Math.round(innerHeight / 2 - center)}px)`;
+			document.body.classList.add("viz-in");
+			viz && viz.start(li);
+		}, 850);
 	};
 	const exitListening = () => {
+		clearTimeout(moveTimer);
 		const cur = document.querySelector(".track.current");
 		document.body.classList.remove("listening");
-		if (cur) {
+		document.body.classList.remove("viz-in");
+		// Scroll-Ausgleich nur, wenn die Zeile schon eingefahren war
+		if (cur && cur.style.transform) {
 			// Die Zeile bleibt optisch stehen: Transform fällt ohne
 			// Übergang weg, dafür springt der Scroll an die Stelle, an
 			// der ihre natürliche Position genau mittig liegt
@@ -254,10 +261,6 @@ if (trackList.length) {
 		}
 		viz && viz.stop();
 	};
-	audio.addEventListener("timeupdate", () => {
-		if (current && audio.duration)
-			current.style.setProperty("--p", (audio.currentTime / audio.duration) * 100 + "%");
-	});
 	audio.addEventListener("ended", () => {
 		if (current) stopRow(current);
 		current = null;
@@ -307,4 +310,64 @@ if (form) {
 		const body = encodeURIComponent(`${d.get("message")}\n\n${d.get("name")}\n${d.get("email")}`);
 		location.href = `mailto:me@julianthurner.com?subject=${subject}&body=${body}`;
 	});
+}
+
+// Extrem weiches Scrollen auf der Hörseite: das Rad setzt nur ein
+// Ziel, die Seite gleitet träge hinterher
+if (trackList.length && matchMedia("(pointer: fine)").matches && !reduceMotion) {
+	let target = scrollY, cur = scrollY, active = false;
+	const maxScroll = () => document.documentElement.scrollHeight - innerHeight;
+	addEventListener(
+		"wheel",
+		(e) => {
+			if (document.body.classList.contains("listening") || document.body.classList.contains("menu-open")) return;
+			e.preventDefault();
+			target = Math.max(0, Math.min(maxScroll(), target + e.deltaY));
+			active = true;
+		},
+		{ passive: false }
+	);
+	(function glide() {
+		if (active) {
+			cur += (target - cur) * 0.055;
+			if (Math.abs(target - cur) < 0.4) {
+				cur = target;
+				active = false;
+			}
+			scrollTo(0, cur);
+		} else {
+			cur = scrollY;
+			target = scrollY;
+		}
+		requestAnimationFrame(glide);
+	})();
+}
+
+// Eigener Cursor: schwarzer Punkt, der wie durch Watte hinterherzieht
+const dot = document.getElementById("cursor");
+if (dot && matchMedia("(pointer: fine)").matches) {
+	let px = 0, py = 0, dx = 0, dy = 0, seen = false;
+	addEventListener("pointermove", (e) => {
+		px = e.clientX;
+		py = e.clientY;
+		if (!seen) {
+			seen = true;
+			dx = px;
+			dy = py;
+			dot.style.opacity = "1";
+		}
+		if (reduceMotion) dot.style.transform = `translate(${px}px, ${py}px) translate(-50%, -50%)`;
+	});
+	document.documentElement.addEventListener("pointerleave", () => {
+		seen = false;
+		dot.style.opacity = "0";
+	});
+	if (!reduceMotion) {
+		(function follow() {
+			dx += (px - dx) * 0.07;
+			dy += (py - dy) * 0.07;
+			dot.style.transform = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) translate(-50%, -50%)`;
+			requestAnimationFrame(follow);
+		})();
+	}
 }

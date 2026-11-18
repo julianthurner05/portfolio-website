@@ -74,64 +74,35 @@ body.listening {
 	border-color: var(--black);
 }
 
-/* Menü: runder Knopf oben rechts, schwarzes Vollbild-Overlay */
-.menu-btn {
+/* Feste Menüleiste oben: Name links, Disziplinen mittig, Über rechts */
+.topbar {
 	position: fixed;
-	top: var(--pad);
-	right: var(--pad);
+	inset: 0 0 auto 0;
 	z-index: 30;
-	width: 52px;
-	height: 36px;
-	border: var(--line) solid var(--black);
-	border-radius: 999px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1rem var(--pad);
 	background: var(--paper);
-	cursor: pointer;
-	display: grid;
-	place-items: center;
-	gap: 0;
-	padding: 0;
+	font-size: 0.95rem;
 }
-.menu-btn::before,
-.menu-btn::after {
-	content: "";
-	width: 18px;
-	height: var(--line);
-	background: var(--black);
-	margin: 2.5px 0;
-	transition: transform 0.25s ease;
+.topbar a {
+	color: inherit;
+	text-decoration: none;
 }
-body.menu-open .menu-btn::before {
-	transform: translateY(3.25px) rotate(45deg);
+.topbar a:hover {
+	text-decoration: underline;
+	text-underline-offset: 0.25em;
 }
-body.menu-open .menu-btn::after {
-	transform: translateY(-3.25px) rotate(-45deg);
+.topbar nav {
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+	display: flex;
+	gap: clamp(1.25rem, 5vw, 3.5rem);
 }
-.overlay {
-	position: fixed;
-	inset: 0;
-	z-index: 20;
-	background: var(--black);
-	color: var(--paper);
-	display: grid;
-	align-content: end;
-	justify-items: start;
-	gap: 1rem;
-	padding: var(--pad);
-	visibility: hidden;
-	opacity: 0;
-	transition: opacity 0.25s ease, visibility 0.25s ease;
-}
-body.menu-open .overlay {
-	visibility: visible;
-	opacity: 1;
-}
-.overlay a {
-	font-size: clamp(1.6rem, 4vw, 2.6rem);
+.topbar a[aria-current="page"] {
 	font-weight: 500;
-	padding: 0.35em 1em;
-}
-.overlay a[aria-current="page"] {
-	color: var(--yellow);
 }
 
 /* Arbeiten: Scroll-Container, in dem jede Sektion einrastet */
@@ -290,6 +261,7 @@ main.snap {
 .page {
 	min-height: 100svh;
 	padding: var(--pad);
+	padding-top: calc(var(--pad) + 2.6rem);
 	display: grid;
 	align-content: end;
 	gap: 2.5rem;
@@ -339,16 +311,22 @@ main.snap {
 	inset: 0;
 	z-index: 0;
 	opacity: 0;
-	transition: opacity 1.2s ease;
+	transition: opacity 2.4s ease;
 	pointer-events: none;
 }
-body.listening #viz {
+body.viz-in #viz {
 	opacity: 1;
+	transition: opacity 1.2s ease;
 }
+/* Rückweg (Pause) deutlich weicher als der Hinweg */
 .listen-head {
-	transition: opacity 1.1s ease;
+	transition: opacity 2.2s ease;
 }
 .track {
+	transition: opacity 2.2s ease, transform 0.9s cubic-bezier(0.33, 1, 0.36, 1);
+}
+body.listening .listen-head,
+body.listening .track {
 	transition: opacity 1.1s ease, transform 0.9s cubic-bezier(0.33, 1, 0.36, 1);
 }
 body.listening .listen-head,
@@ -374,8 +352,6 @@ body.listening .track.current .t-bar {
 	font-size: 0.72rem;
 	letter-spacing: 0.06em;
 	margin-bottom: clamp(3rem, 12vh, 8rem);
-	/* rechts Platz für den Menüknopf */
-	padding-right: 5.5rem;
 }
 .tracks {
 	list-style: none;
@@ -564,6 +540,34 @@ form.contact button {
 	}
 	to {
 		transform: scaleY(1);
+	}
+}
+
+/* Eigener Cursor: schwarzer Punkt, zieht wie durch Watte hinterher */
+@media (pointer: fine) {
+	html,
+	body,
+	a,
+	button {
+		cursor: none;
+	}
+}
+#cursor {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: var(--black);
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.3s ease;
+	z-index: 40;
+}
+@media (pointer: coarse) {
+	#cursor {
+		display: none;
 	}
 }
 

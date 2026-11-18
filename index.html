@@ -11,13 +11,16 @@
 		<link rel="stylesheet" href="styles.css" />
 	</head>
 	<body>
-		<button class="menu-btn" aria-label="Menü" aria-expanded="false"></button>
-		<nav class="overlay" aria-label="Hauptmenü">
-			<a class="pill" href="/" aria-current="page">Arbeiten</a>
-			<a class="pill" href="/musik">Musik</a>
-			<a class="pill" href="/about">Über</a>
-			<a class="pill" href="/kontakt">Kontakt</a>
-		</nav>
+		<header class="topbar">
+			<a class="wordmark" href="/">Julian Thurner</a>
+			<nav>
+				<a href="/musik">Musik</a>
+				<a href="/#design">Design</a>
+				<a href="/#text">Text</a>
+			</nav>
+			<a href="/about">Über mich</a>
+		</header>
+		<div id="cursor" aria-hidden="true"></div>
 
 		<main class="snap">
 			<!-- Text: Zeilen als schwarze Balken, der rote Punkt schwebt -->
