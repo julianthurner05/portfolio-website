@@ -287,14 +287,46 @@ main.snap {
 	width: clamp(3rem, 8vw, 6rem);
 	height: clamp(3rem, 8vw, 6rem);
 }
+/* Über mich: Porträt links (bleibt stehen), rechts Text und Formular */
+.about-grid {
+	display: grid;
+	grid-template-columns: minmax(16rem, 28rem) minmax(0, 42rem);
+	gap: clamp(2rem, 6vw, 6rem);
+	align-items: start;
+}
 .about-photo {
 	margin: 0;
-	max-width: 44rem;
+	position: sticky;
+	top: calc(var(--pad) + 3rem);
 }
 .about-photo img {
 	width: 100%;
 	height: auto;
 	display: block;
+}
+.about-body {
+	display: grid;
+	gap: 2.2rem;
+}
+.about-body h1 {
+	margin: 0;
+}
+.about-body .intro {
+	font-family: "ABC Otto", Georgia, serif;
+	font-weight: 300;
+	font-size: clamp(1.1rem, 1.7vw, 1.4rem);
+	line-height: 1.4;
+	letter-spacing: -0.02em;
+	margin: 0;
+}
+@media (max-width: 760px) {
+	.about-grid {
+		grid-template-columns: 1fr;
+	}
+	.about-photo {
+		position: static;
+		max-width: 26rem;
+	}
 }
 .page .cols {
 	display: grid;
@@ -595,6 +627,10 @@ body.listening .track.current {
 	translate: -50% -50%;
 	width: min(72vw, 115svh);
 	height: min(58svh, 46vw);
+}
+.slide-clip {
+	position: absolute;
+	inset: 0;
 	overflow: hidden;
 }
 .slides {
