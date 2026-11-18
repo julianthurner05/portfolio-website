@@ -441,15 +441,33 @@ if (shelfReturn) {
 	});
 }
 
-// Vollbild-Slider der Designprojekte: Pfeile blättern, Videos
-// spielen nur auf der sichtbaren Folie
+// Galerie-Karussell: endlos in beide Richtungen, per Klonen an
+// beiden Enden ohne Rücklauf-Sprung; Videos spielen nur sichtbar
 for (const sl of document.querySelectorAll(".slider")) {
 	const slides = sl.querySelector(".slides");
-	const n = slides.children.length;
-	let i = 0;
-	const go = (d) => {
-		i = (i + d + n) % n;
+	const real = [...slides.children];
+	const n = real.length;
+	if (n > 1) {
+		const first = real[0].cloneNode(true);
+		const last = real[n - 1].cloneNode(true);
+		for (const c of [first, last]) {
+			for (const b of c.querySelectorAll(".film-btn")) b.remove();
+			for (const v of c.querySelectorAll("video")) {
+				v.removeAttribute("autoplay");
+				v.preload = "metadata";
+			}
+		}
+		slides.appendChild(first);
+		slides.insertBefore(last, slides.firstChild);
+	}
+	let i = n > 1 ? 1 : 0;
+	const set = (anim) => {
+		slides.style.transition = anim ? "" : "none";
 		slides.style.transform = `translateX(-${i * 100}%)`;
+		if (!anim) void slides.offsetWidth;
+	};
+	set(false);
+	const syncVideos = () => {
 		[...slides.children].forEach((f, k) => {
 			const v = f.querySelector("video");
 			if (v) {
@@ -458,17 +476,64 @@ for (const sl of document.querySelectorAll(".slider")) {
 			}
 		});
 	};
+	let busy = false;
+	const settle = () => {
+		busy = false;
+		if (i === 0) {
+			i = n;
+			set(false);
+		} else if (i === n + 1) {
+			i = 1;
+			set(false);
+		}
+		syncVideos();
+	};
+	const go = (d) => {
+		if (n < 2) return;
+		if (reduceMotion) {
+			i = ((i - 1 + d + n) % n) + 1;
+			set(false);
+			syncVideos();
+			return;
+		}
+		if (busy) return;
+		busy = true;
+		i += d;
+		set(true);
+	};
+	slides.addEventListener("transitionend", (e) => {
+		if (e.target === slides) settle();
+	});
 	sl.querySelector(".prev").addEventListener("click", () => go(-1));
 	sl.querySelector(".next").addEventListener("click", () => go(1));
 }
 
-// Kinomodus: Film mit Ton auf Schwarz, alles andere blendet aus
+// Kinomodus: Film mit Ton auf Schwarz, alles andere blendet aus,
+// der Film skaliert dabei aufs Vollformat
 let cinemaVideo = null;
+let cinemaFrame = null;
+let cinemaFadeRaf = 0;
+const fadeAudioIn = (v, dur = 1400) => {
+	cancelAnimationFrame(cinemaFadeRaf);
+	v.volume = 0;
+	v.muted = false;
+	const t0 = performance.now();
+	const step = (t) => {
+		const k = Math.min(1, (t - t0) / dur);
+		v.volume = k * k; // leise beginnen, weich anschwellen
+		if (k < 1) cinemaFadeRaf = requestAnimationFrame(step);
+	};
+	cinemaFadeRaf = requestAnimationFrame(step);
+};
 const closeCinema = () => {
 	if (!cinemaVideo) return;
+	cancelAnimationFrame(cinemaFadeRaf);
 	document.body.classList.remove("cinema");
+	cinemaFrame.classList.remove("cinema-stage");
 	cinemaVideo.muted = true;
+	cinemaVideo.volume = 1;
 	cinemaVideo = null;
+	cinemaFrame = null;
 };
 for (const btn of document.querySelectorAll(".film-btn")) {
 	btn.addEventListener("click", () => {
@@ -477,10 +542,11 @@ for (const btn of document.querySelectorAll(".film-btn")) {
 			hero.classList.remove("open");
 			hero.querySelector(".more").setAttribute("aria-expanded", "false");
 		}
-		cinemaVideo = btn.closest("figure").querySelector("video");
+		cinemaFrame = btn.closest(".work-frame");
+		cinemaVideo = cinemaFrame.querySelector("video");
+		cinemaFrame.classList.add("cinema-stage");
 		document.body.classList.add("cinema");
-		cinemaVideo.currentTime = 0;
-		cinemaVideo.muted = false;
+		fadeAudioIn(cinemaVideo);
 		cinemaVideo.play().catch(() => {});
 	});
 }

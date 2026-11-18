@@ -643,6 +643,12 @@ body.listening .track.current {
 	width: min(72vw, 115svh);
 	height: min(58svh, 46vw);
 	translate: 0 -1.5rem;
+	transition: width 0.8s ease, height 0.8s ease, translate 0.8s ease;
+}
+body.cinema .work-frame.cinema-stage {
+	width: 100%;
+	height: 100%;
+	translate: 0 0;
 }
 .work-frame img,
 .work-frame video {
