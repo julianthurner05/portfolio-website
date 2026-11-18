@@ -389,3 +389,20 @@ if (shelf) {
 		{ passive: false }
 	);
 }
+
+// Rückweg zum Textemenü: die Bücher fahren von rechts herein
+const shelfReturn = document.querySelector(".shelf-return");
+if (shelfReturn) {
+	shelfReturn.addEventListener("click", () => {
+		if (reduceMotion) {
+			location.href = shelfReturn.dataset.href;
+			return;
+		}
+		shelfReturn.classList.add("in");
+		shelfReturn.addEventListener(
+			"transitionend",
+			() => (location.href = shelfReturn.dataset.href),
+			{ once: true }
+		);
+	});
+}
