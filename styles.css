@@ -82,8 +82,7 @@ body.listening {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding: 1rem var(--pad);
-	background: var(--paper);
+	padding: var(--pad);
 	font-size: 0.95rem;
 }
 .topbar a {

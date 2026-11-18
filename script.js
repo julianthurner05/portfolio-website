@@ -329,7 +329,7 @@ if (trackList.length && matchMedia("(pointer: fine)").matches && !reduceMotion) 
 	);
 	(function glide() {
 		if (active) {
-			cur += (target - cur) * 0.055;
+			cur += (target - cur) * 0.18;
 			if (Math.abs(target - cur) < 0.4) {
 				cur = target;
 				active = false;
