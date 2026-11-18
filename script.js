@@ -224,6 +224,7 @@ if (trackList.length) {
 		ensureViz();
 		li.classList.add("current");
 		document.body.classList.add("listening");
+		if (lenis) lenis.stop();
 		// Jukebox: erst blendet der Rest der Liste aus, dann erst fährt
 		// der Titel in die Mitte und das Visual kommt dazu
 		clearTimeout(moveTimer);
@@ -240,6 +241,7 @@ if (trackList.length) {
 	};
 	const exitListening = () => {
 		clearTimeout(moveTimer);
+		if (lenis) lenis.start();
 		const cur = document.querySelector(".track.current");
 		document.body.classList.remove("listening");
 		document.body.classList.remove("viz-in");
@@ -252,7 +254,13 @@ if (trackList.length) {
 			for (let el = cur; el; el = el.offsetParent) y += el.offsetTop;
 			cur.style.transition = "none";
 			cur.style.transform = "";
-			window.scrollTo({ top: Math.round(y + cur.offsetHeight / 2 - innerHeight / 2), behavior: "instant" });
+			const top = Math.round(y + cur.offsetHeight / 2 - innerHeight / 2);
+			if (lenis) {
+				lenis.start();
+				lenis.scrollTo(top, { immediate: true });
+			} else {
+				window.scrollTo({ top, behavior: "instant" });
+			}
 			requestAnimationFrame(() => (cur.style.transition = ""));
 		}
 		for (const li of trackList) {
@@ -312,35 +320,14 @@ if (form) {
 	});
 }
 
-// Extrem weiches Scrollen auf der Hörseite: das Rad setzt nur ein
-// Ziel, die Seite gleitet träge hinterher
-if (trackList.length && matchMedia("(pointer: fine)").matches && !reduceMotion) {
-	let target = scrollY, cur = scrollY, active = false;
-	const maxScroll = () => document.documentElement.scrollHeight - innerHeight;
-	addEventListener(
-		"wheel",
-		(e) => {
-			if (document.body.classList.contains("listening") || document.body.classList.contains("menu-open")) return;
-			e.preventDefault();
-			target = Math.max(0, Math.min(maxScroll(), target + e.deltaY));
-			active = true;
-		},
-		{ passive: false }
-	);
-	(function glide() {
-		if (active) {
-			cur += (target - cur) * 0.18;
-			if (Math.abs(target - cur) < 0.4) {
-				cur = target;
-				active = false;
-			}
-			scrollTo(0, cur);
-		} else {
-			cur = scrollY;
-			target = scrollY;
-		}
-		requestAnimationFrame(glide);
-	})();
+// Leichtes Lenis-Smooth-Scrolling; die Snap-Startseite bleibt nativ
+let lenis = null;
+if (window.Lenis && !reduceMotion && !document.querySelector("main.snap")) {
+	lenis = new Lenis({ lerp: 0.14 });
+	(function raf(t) {
+		lenis.raf(t);
+		requestAnimationFrame(raf);
+	})(performance.now());
 }
 
 // Eigener Cursor: schwarzer Punkt, der wie durch Watte hinterherzieht
