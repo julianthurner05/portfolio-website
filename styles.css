@@ -578,10 +578,14 @@ body.listening .track.current {
 	transition: transform 1.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Design: ein Projekt pro Viewport, Medien als Vollbild-Slider */
+/* Design: ein Projekt pro Viewport, Medien als gerahmter Slider */
 .slider {
 	position: absolute;
-	inset: 0;
+	left: 50%;
+	top: calc(50% - 1.5rem);
+	translate: -50% -50%;
+	width: min(72vw, 115svh);
+	height: min(58svh, 46vw);
 	overflow: hidden;
 }
 .slides {
@@ -598,7 +602,7 @@ body.listening .track.current {
 .slides video {
 	width: 100%;
 	height: 100%;
-	object-fit: cover;
+	object-fit: contain;
 	display: block;
 }
 .slide-nav {
@@ -615,10 +619,10 @@ body.listening .track.current {
 	padding: 0.8rem;
 }
 .slide-nav.prev {
-	left: calc(var(--pad) - 0.8rem);
+	left: -3.2rem;
 }
 .slide-nav.next {
-	right: calc(var(--pad) - 0.8rem);
+	right: -3.2rem;
 }
 .media-hero h1,
 .media-hero .more {
@@ -626,8 +630,13 @@ body.listening .track.current {
 	mix-blend-mode: difference;
 	z-index: 2;
 }
+.media-hero h1 {
+	font-size: clamp(1.9rem, 4vw, 3.2rem);
+}
 .media-hero .infobox {
 	z-index: 3;
+	/* das Panel bleibt niedrig statt fast bildschirmhoch */
+	height: min(26rem, 62svh);
 }
 @media (prefers-reduced-motion: reduce) {
 	.slides {
