@@ -326,6 +326,31 @@ main.snap {
 	align-content: start;
 	gap: 0;
 	padding-top: var(--pad);
+	position: relative;
+	z-index: 1;
+}
+
+/* Hörmodus: die Liste blendet langsam aus, nur der laufende Titel
+   bleibt, dahinter erscheint das p5-Visual */
+#viz {
+	position: fixed;
+	inset: 0;
+	z-index: 0;
+	opacity: 0;
+	transition: opacity 1.2s ease;
+	pointer-events: none;
+}
+body.listening #viz {
+	opacity: 1;
+}
+.track,
+.listen-head {
+	transition: opacity 1.1s ease;
+}
+body.listening .listen-head,
+body.listening .track:not(.current) {
+	opacity: 0;
+	pointer-events: none;
 }
 .listen-head {
 	display: flex;
