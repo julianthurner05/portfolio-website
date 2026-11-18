@@ -508,6 +508,47 @@ body.listening .track.current {
 	color: var(--black);
 	border: var(--line) solid var(--black);
 }
+/* Spine-Typografie nach Inspo: groß, klein, Serif, Sans, kopfüber */
+.book.flat .spine {
+	font-size: 1.3rem;
+}
+.spine.s-sans {
+	font-family: "Neue Montreal", ui-sans-serif, sans-serif;
+	font-weight: 500;
+}
+.spine.s-big {
+	font-size: clamp(1.5rem, 2.6vw, 2.3rem);
+}
+.spine.s-caps {
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+.spine.s-italic {
+	font-style: italic;
+}
+.spine.s-up {
+	transform: rotate(180deg);
+}
+.book .note {
+	position: absolute;
+	bottom: 0.7rem;
+	left: 0;
+	right: 0;
+	text-align: center;
+	font-family: "Neue Montreal", ui-sans-serif, sans-serif;
+	font-weight: 400;
+	font-size: 0.7rem;
+	letter-spacing: 0.05em;
+}
+.egg {
+	flex: none;
+	width: 7rem;
+	height: 9.2rem;
+	background: var(--paper);
+	border: var(--line) solid var(--black);
+	border-radius: 50% 50% 47% 53% / 61% 63% 37% 39%;
+	margin-left: 2rem;
+}
 
 /* Leseseite: rechts schaut das Regal angeschnitten herein;
    ein Klick fährt die Bücher herein und führt zurück ins Textemenü */
@@ -525,13 +566,14 @@ body.listening .track.current {
 	justify-content: start;
 	overflow: hidden;
 	transform: translateX(calc(100% - clamp(3.5rem, 8vw, 7rem)));
-	transition: transform 0.7s cubic-bezier(0.76, 0, 0.24, 1);
+	transition: transform 0.6s cubic-bezier(0.33, 1, 0.36, 1);
 }
 .shelf-return:hover {
 	transform: translateX(calc(100% - clamp(5rem, 11vw, 9.5rem)));
 }
 .shelf-return.in {
 	transform: translateX(0);
+	transition: transform 1.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Kontakt: große Zeilen-Labels, Linie statt Kasten, Senden unten rechts */

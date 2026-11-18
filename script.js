@@ -374,20 +374,39 @@ if (dot && ring && matchMedia("(pointer: fine)").matches) {
 	}
 }
 
-// Regal: vertikales Radeln scrollt horizontal
+// Regal: das Rad setzt ein Ziel, das Regal gleitet sanft hin
 const shelf = document.querySelector(".shelf");
 if (shelf) {
+	let target = shelf.scrollLeft, cur = target, raf = null;
+	const step = () => {
+		cur += (target - cur) * 0.14;
+		if (Math.abs(target - cur) < 0.5) {
+			cur = target;
+			raf = null;
+		} else {
+			raf = requestAnimationFrame(step);
+		}
+		shelf.scrollLeft = cur;
+	};
 	shelf.addEventListener(
 		"wheel",
 		(e) => {
-			if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-				shelf.scrollLeft += e.deltaY;
-				e.preventDefault();
-				e.stopPropagation();
+			e.preventDefault();
+			e.stopPropagation();
+			target += Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+			target = Math.max(0, Math.min(shelf.scrollWidth - shelf.clientWidth, target));
+			if (reduceMotion) {
+				cur = target;
+				shelf.scrollLeft = target;
+			} else if (!raf) {
+				raf = requestAnimationFrame(step);
 			}
 		},
 		{ passive: false }
 	);
+	shelf.addEventListener("scroll", () => {
+		if (!raf) cur = target = shelf.scrollLeft;
+	});
 }
 
 // Rückweg zum Textemenü: die Bücher fahren von rechts herein
