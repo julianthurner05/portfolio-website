@@ -287,6 +287,15 @@ main.snap {
 	width: clamp(3rem, 8vw, 6rem);
 	height: clamp(3rem, 8vw, 6rem);
 }
+.about-photo {
+	margin: 0;
+	max-width: 44rem;
+}
+.about-photo img {
+	width: 100%;
+	height: auto;
+	display: block;
+}
 .page .cols {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
