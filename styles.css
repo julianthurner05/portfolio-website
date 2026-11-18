@@ -336,16 +336,10 @@ body.listening .track:not(.current) {
 	opacity: 0;
 	pointer-events: none;
 }
-/* lesbar auf jedem Visual: Differenz-Modus macht die Zeile
-   auf dunklem Grund weiß, auf hellem dunkel */
+/* die laufende Zeile liegt schwarz über dem hellen Visual */
 body.listening .track.current {
 	position: relative;
 	z-index: 2;
-	color: #fff;
-	mix-blend-mode: difference;
-}
-body.listening .track.current .t-bar {
-	background: #fff;
 }
 .tracks {
 	list-style: none;
@@ -435,6 +429,68 @@ body.listening .track.current .t-bar {
 }
 .reading p {
 	margin: 0 0 1.45em;
+}
+
+/* Bücherregal: horizontal scrollbar, jeder Text ein stilisierter
+   Buchrücken; manche lehnen an ihren Nachbarn */
+.shelf-page {
+	min-height: 100svh;
+	display: grid;
+	align-content: center;
+}
+.shelf {
+	overflow-x: auto;
+	overflow-y: hidden;
+	scrollbar-width: none;
+}
+.shelf::-webkit-scrollbar {
+	display: none;
+}
+.shelf-row {
+	display: flex;
+	align-items: flex-end;
+	gap: 0.5rem;
+	width: max-content;
+	padding: 3rem 12vw 0;
+	border-bottom: 6px solid var(--black);
+}
+.book {
+	position: relative;
+	flex: none;
+	border-radius: 3px 3px 0 0;
+	text-decoration: none;
+	transition: translate 0.25s ease;
+}
+a.book:hover {
+	translate: 0 -10px;
+}
+.book .spine {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	justify-content: center;
+	writing-mode: vertical-rl;
+	padding-top: 1rem;
+	font-size: 0.95rem;
+	letter-spacing: 0.03em;
+	white-space: nowrap;
+	overflow: hidden;
+}
+.book.lean {
+	transform: rotate(-8deg);
+	transform-origin: bottom left;
+	z-index: 1;
+	margin-left: 0.4rem;
+	margin-right: 1.4rem;
+}
+.b-blue { background: var(--blue); color: var(--paper); }
+.b-red { background: var(--red); color: var(--paper); }
+.b-yellow { background: var(--yellow); color: var(--black); }
+.b-black { background: var(--black); color: var(--paper); }
+.b-paper {
+	background: var(--paper);
+	color: var(--black);
+	border: var(--line) solid var(--black);
 }
 
 /* Kontakt: große Zeilen-Labels, Linie statt Kasten, Senden unten rechts */

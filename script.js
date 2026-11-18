@@ -373,3 +373,18 @@ if (dot && ring && matchMedia("(pointer: fine)").matches) {
 		})();
 	}
 }
+
+// Regal: vertikales Radeln scrollt horizontal
+const shelf = document.querySelector(".shelf");
+if (shelf) {
+	shelf.addEventListener(
+		"wheel",
+		(e) => {
+			if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+				shelf.scrollLeft += e.deltaY;
+				e.preventDefault();
+			}
+		},
+		{ passive: false }
+	);
+}
