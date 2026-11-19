@@ -305,6 +305,11 @@
 				if (!d.p || !d.p.length) d.p = [projekte[0].id];
 			}
 			const aktuellesProjekt = () => projekte.find((p) => p.id === filter);
+			// auch der allererste Text eines frischen Stands heißt nach dem Tag
+			if (docs.length === 1 && !docs[0].title && !docs[0].body) {
+				const pr = aktuellesProjekt();
+				if (pr && pr.auto) docs[0].title = datumsTitel();
+			}
 
 			const barEl = document.querySelector(".docs");
 			const projsEl = document.querySelector(".projs");
