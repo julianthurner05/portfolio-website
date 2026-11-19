@@ -57,14 +57,18 @@
 				z-index: 10;
 			}
 			/* Die Leiste zeigt sich erst beim Annähern; sonst schaut nur
-			   das Lineal mit etwas Abstand zur Oberkante heraus */
+			   das Lineal mit etwas Abstand zur Oberkante heraus, und das
+			   Blatt rückt um dieselbe Strecke mit hinauf */
 			@media (hover: hover) {
-				.top {
-					transform: translateY(calc(-100% + 40px));
+				.top,
+				main {
+					transform: translateY(calc(40px - var(--kopf, 121px)));
 					transition: transform 0.45s cubic-bezier(0.33, 1, 0.36, 1);
 				}
 				.top:hover,
-				.top:focus-within {
+				.top:focus-within,
+				.top:hover ~ main,
+				.top:focus-within ~ main {
 					transform: none;
 				}
 			}
@@ -984,6 +988,13 @@
 
 			renderBar();
 			load();
+
+			// Kopfhöhe für das Verstecken der Leiste bereitstellen
+			const kopfMessen = () => {
+				document.documentElement.style.setProperty("--kopf", document.querySelector(".top").offsetHeight + "px");
+			};
+			kopfMessen();
+			addEventListener("resize", kopfMessen);
 
 			// Serverstand übernehmen (er gewinnt), oder den lokalen hochladen
 			const uebernehmen = (z) => {
