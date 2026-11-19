@@ -282,6 +282,8 @@
 			for (const d of docs) {
 				if (typeof d.p === "string") d.p = [d.p];
 			}
+			const datumsTitel = () =>
+				new Date().toLocaleDateString("de-AT", { day: "numeric", month: "long", year: "numeric" });
 			let active = localStorage.getItem(LA);
 			if (!docs.some((d) => d.id === active)) active = docs[0].id;
 
@@ -290,8 +292,19 @@
 				projekte = JSON.parse(localStorage.getItem(LP) || "[]");
 			} catch {}
 			if (!Array.isArray(projekte)) projekte = [];
+			// Automatisches Schreiben ist ein normales Projekt und wird
+			// angelegt, sobald es keine Projekte gibt
+			if (!projekte.length) {
+				projekte = [{ id: Date.now().toString(36), name: "Automatisches Schreiben", auto: true }];
+			}
 			let filter = localStorage.getItem(LF) || "";
-			if (filter && !projekte.some((p) => p.id === filter)) filter = "";
+			if (!projekte.some((p) => p.id === filter)) filter = projekte[0].id;
+			// jeder Text gehört zu mindestens einem Projekt
+			for (const d of docs) {
+				if (d.p) d.p = d.p.filter((id) => projekte.some((p) => p.id === id));
+				if (!d.p || !d.p.length) d.p = [projekte[0].id];
+			}
+			const aktuellesProjekt = () => projekte.find((p) => p.id === filter);
 
 			const barEl = document.querySelector(".docs");
 			const projsEl = document.querySelector(".projs");
@@ -331,19 +344,32 @@
 			};
 			addEventListener("beforeunload", persist);
 
-			const sichtbar = () => docs.filter((d) => !filter || (d.p || []).includes(filter));
+			const sichtbar = () => docs.filter((d) => (d.p || []).includes(filter));
 
-			// Cmd+Z macht Struktur-Schritte rückgängig (Sortieren, Zuordnen,
-			// Löschen, Projekte); im Text selbst übernimmt das native Undo
+			// Cmd+Z macht Struktur-Schritte rückgängig, Cmd+Shift+Z wieder
+			// her; im Text selbst übernimmt das native Undo. Texte, die ein
+			// Undo entfernen würde, sichert der Papierkorb.
 			const undoStack = [];
+			const redoStack = [];
+			const stand = () => JSON.stringify({ docs, projekte, filter, active });
 			const merken = () => {
-				undoStack.push(JSON.stringify({ docs, projekte, filter, active }));
+				undoStack.push(stand());
+				redoStack.length = 0;
 				if (undoStack.length > 100) undoStack.shift();
 			};
-			const undo = () => {
-				const s = undoStack.pop();
-				if (!s) return;
+			const inPapierkorb = (weg) => {
+				if (!weg.length) return;
+				let trash = [];
+				try {
+					trash = JSON.parse(localStorage.getItem(LT) || "[]");
+				} catch {}
+				trash.push(...weg);
+				localStorage.setItem(LT, JSON.stringify(trash));
+			};
+			const herstellen = (s) => {
 				const z = JSON.parse(s);
+				const bleiben = new Set(z.docs.map((d) => d.id));
+				inPapierkorb(docs.filter((d) => !bleiben.has(d.id) && (d.title || d.body)));
 				docs = z.docs;
 				projekte = z.projekte;
 				filter = z.filter;
@@ -352,12 +378,23 @@
 				renderBar();
 				load();
 			};
+			const undo = () => {
+				if (!undoStack.length) return;
+				redoStack.push(stand());
+				herstellen(undoStack.pop());
+			};
+			const redo = () => {
+				if (!redoStack.length) return;
+				undoStack.push(stand());
+				herstellen(redoStack.pop());
+			};
 			addEventListener("keydown", (e) => {
-				if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === "z") {
+				if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
 					const ae = document.activeElement;
 					if (ae && ae.isContentEditable) return;
 					e.preventDefault();
-					undo();
+					if (e.shiftKey) redo();
+					else undo();
 				}
 			});
 
@@ -468,8 +505,13 @@
 				const vis = sichtbar();
 				if (!vis.some((d) => d.id === active)) {
 					if (!vis.length) {
-						const d = { id: Date.now().toString(36), title: "", body: "" };
-						if (filter) d.p = [filter];
+						const pr = aktuellesProjekt();
+						const d = {
+							id: Date.now().toString(36),
+							title: pr && pr.auto ? datumsTitel() : "",
+							body: "",
+							p: [filter],
+						};
 						docs.push(d);
 						vis.push(d);
 					}
@@ -493,12 +535,14 @@
 			const projektWeg = (id) => {
 				merken();
 				projekte = projekte.filter((p) => p.id !== id);
-				for (const d of docs)
-					if (d.p) {
-						d.p = d.p.filter((x) => x !== id);
-						if (!d.p.length) delete d.p;
-					}
-				if (filter === id) filter = "";
+				if (!projekte.length) {
+					projekte = [{ id: Date.now().toString(36), name: "Automatisches Schreiben", auto: true }];
+				}
+				if (filter === id) filter = projekte[0].id;
+				for (const d of docs) {
+					if (d.p) d.p = d.p.filter((x) => x !== id);
+					if (!d.p || !d.p.length) d.p = [projekte[0].id];
+				}
 				persist();
 				renderBar();
 				sichtNachziehen();
@@ -544,7 +588,7 @@
 
 			const renderProjs = () => {
 				projsEl.innerHTML = "";
-				const alle = [{ id: "", name: "Alle" }, ...projekte];
+				const alle = [...projekte];
 				for (const p of alle) {
 					const wrap = document.createElement("span");
 					wrap.className = "proj" + (p.id === filter ? " active" : "");
@@ -553,33 +597,20 @@
 					open.type = "button";
 					open.className = "open";
 					open.textContent = p.name;
-					wrap.append(open);
-					if (p.id) {
-						open.addEventListener("dblclick", () => umbenennen(open, p));
-						const del = document.createElement("button");
-						del.type = "button";
-						del.className = "del";
-						del.textContent = "×";
-						del.setAttribute("aria-label", p.name + " auflösen");
-						del.addEventListener("click", () => projektWeg(p.id));
-						wrap.append(del);
-						zieh(open, wrap, projsEl, false, () => projektWechsel(p.id), (platz) => {
-							const ref = platz < alle.length ? alle[platz] : null;
-							if (ref === p) return;
-							merken();
-							projekte.splice(projekte.indexOf(p), 1);
-							let i;
-							if (!ref) i = projekte.length;
-							else if (!ref.id) i = 0;
-							else i = projekte.indexOf(ref);
-							if (i < 0) i = 0;
-							projekte.splice(i, 0, p);
-							persist();
-							renderBar();
-						});
-					} else {
-						zieh(open, wrap, projsEl, false, () => projektWechsel(""), () => {});
-					}
+					open.addEventListener("dblclick", () => umbenennen(open, p));
+					const del = document.createElement("button");
+					del.type = "button";
+					del.className = "del";
+					del.textContent = "×";
+					del.setAttribute("aria-label", p.name + " auflösen");
+					del.addEventListener("click", () => projektWeg(p.id));
+					wrap.append(open, del);
+					zieh(open, wrap, projsEl, false, () => projektWechsel(p.id), (platz) => {
+						merken();
+						umsortieren(projekte, p, alle, platz);
+						persist();
+						renderProjs();
+					});
 					projsEl.append(wrap);
 				}
 			};
@@ -606,8 +637,7 @@
 						if (ziel) {
 							const zid = ziel.dataset.id;
 							// normal verschiebt, mit Option bleibt es auch im alten
-							if (!zid) delete d.p;
-							else if (option) d.p = [...new Set([...(d.p || []), zid])];
+							if (option) d.p = [...new Set([...(d.p || []), zid])];
 							else d.p = [zid];
 						} else {
 							umsortieren(docs, d, vis, platz);
@@ -661,14 +691,19 @@
 			document.querySelector(".new").addEventListener("click", () => {
 				persist();
 				merken();
-				const d = { id: Date.now().toString(36), title: "", body: "" };
-				if (filter) d.p = [filter];
+				const pr = aktuellesProjekt();
+				const d = {
+					id: Date.now().toString(36),
+					title: pr && pr.auto ? datumsTitel() : "",
+					body: "",
+					p: [filter],
+				};
 				docs.push(d);
 				active = d.id;
 				persist();
 				renderDocs();
 				load();
-				titleEl.focus();
+				(pr && pr.auto ? bodyEl : titleEl).focus();
 			});
 
 			document.querySelector(".neuproj").addEventListener("click", () => {
