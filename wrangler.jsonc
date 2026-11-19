@@ -1,11 +1,22 @@
 {
-  // Muss mit dem Projektnamen in Cloudflare übereinstimmen
-  "name": "portfolio-website",
-  "compatibility_date": "2026-10-01",
-  // Der ganze Ordner wird als statische Seite ausgeliefert, außer was in .assetsignore steht
-  "assets": {
-    "directory": "."
-  },
-  // Pflicht für Vorschau-Builds von Branches außer main (npx wrangler preview)
-  "previews": {}
+	// Muss mit dem Projektnamen in Cloudflare übereinstimmen
+	"name": "portfolio-website",
+	"compatibility_date": "2026-10-01",
+	// Kleiner Worker fürs Schreibprogramm (API), der Rest sind statische Dateien
+	"main": "worker.js",
+	// Der ganze Ordner wird als statische Seite ausgeliefert, außer was in .assetsignore steht
+	"assets": {
+		"directory": ".",
+		"binding": "ASSETS"
+	},
+	// Gemeinsamer Speicher für die Texte des Schreibprogramms
+	"kv_namespaces": [
+		{
+			"binding": "SCHREIBEN",
+			"id": "552ec381ebbe40c8a5249d184426bba3",
+			"remote": true
+		}
+	],
+	// Pflicht für Vorschau-Builds von Branches außer main (npx wrangler preview)
+	"previews": {}
 }

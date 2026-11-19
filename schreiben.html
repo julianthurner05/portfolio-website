@@ -244,6 +244,26 @@
 				content: "…";
 				opacity: 0.25;
 			}
+
+			/* Einmal pro Browser: der Schlüssel zum gemeinsamen Speicher */
+			.schluessel {
+				margin: 0 var(--pad) 2.5rem var(--ml);
+			}
+			.schluessel input {
+				font-family: "ABC Otto", Georgia, serif;
+				font-weight: 300;
+				font-size: 1.1rem;
+				color: var(--black);
+				border: 0;
+				border-bottom: 1.5px solid var(--black);
+				background: none;
+				outline: none;
+				padding: 0.2rem 0;
+				width: 14rem;
+			}
+			.schluessel input::placeholder {
+				color: rgba(20, 20, 20, 0.35);
+			}
 		</style>
 	</head>
 	<body>
@@ -263,6 +283,9 @@
 		</header>
 
 		<main>
+			<div class="schluessel" hidden>
+				<input type="password" placeholder="Schlüssel" aria-label="Schlüssel für den gemeinsamen Speicher" />
+			</div>
 			<article class="sheet">
 				<div class="title" contenteditable="plaintext-only"></div>
 				<div class="body" contenteditable="plaintext-only"></div>
@@ -354,6 +377,39 @@
 				return out;
 			};
 
+			// Gemeinsamer Stand am Server: alle Browser sehen dasselbe,
+			// sobald der Schlüssel einmal eingegeben ist
+			const LK = "schreib-schluessel";
+			let schluessel = localStorage.getItem(LK) || "";
+			let syncTimer = 0;
+			const serverSichern = () => {
+				if (!schluessel) return;
+				clearTimeout(syncTimer);
+				syncTimer = setTimeout(() => {
+					fetch("/api/schreiben", {
+						method: "PUT",
+						headers: { "x-schreib-key": schluessel, "content-type": "application/json" },
+						body: JSON.stringify({ docs, projekte, filter, active, papierkorb: papierkorbListe(), t: Date.now() }),
+					}).catch(() => {});
+				}, 800);
+			};
+			const serverLaden = async () => {
+				if (!schluessel) return null;
+				try {
+					const r = await fetch("/api/schreiben", { headers: { "x-schreib-key": schluessel } });
+					if (r.status === 401) {
+						schluessel = "";
+						localStorage.removeItem(LK);
+						schluesselFragen();
+						return null;
+					}
+					if (!r.ok) return null;
+					return await r.json();
+				} catch {
+					return null;
+				}
+			};
+
 			let saveTimer = 0;
 			let ungesichert = false;
 			const persist = () => {
@@ -362,6 +418,7 @@
 				localStorage.setItem(LA, active);
 				localStorage.setItem(LP, JSON.stringify(projekte));
 				localStorage.setItem(LF, filter);
+				serverSichern();
 			};
 			const queueSave = () => {
 				ungesichert = true;
@@ -914,6 +971,55 @@
 
 			renderBar();
 			load();
+
+			// Serverstand übernehmen (er gewinnt), oder den lokalen hochladen
+			const uebernehmen = (z) => {
+				if (!z || !Array.isArray(z.docs) || !Array.isArray(z.projekte)) return false;
+				docs = z.docs;
+				projekte = z.projekte;
+				filter = z.filter || filter;
+				active = z.active || active;
+				if (!projekte.some((p) => p.auto)) {
+					projekte.unshift({ id: Date.now().toString(36), name: "Automatisches Schreiben", auto: true });
+				}
+				if (!projekte.some((p) => p.id === filter)) filter = projekte[0].id;
+				for (const d of docs) {
+					if (typeof d.p === "string") d.p = [d.p];
+					if (d.p) d.p = d.p.filter((id) => projekte.some((p) => p.id === id));
+					if (!d.p || !d.p.length) d.p = [projekte[0].id];
+				}
+				if (!docs.length) {
+					const pr = projekte.find((p) => p.id === filter);
+					docs = [{ id: Date.now().toString(36), title: pr && pr.auto ? datumsTitel() : "", body: "", p: [filter] }];
+				}
+				if (!docs.some((d) => d.id === active)) active = (sichtbar()[0] || docs[0]).id;
+				if (Array.isArray(z.papierkorb)) localStorage.setItem(LT, JSON.stringify(z.papierkorb));
+				persist();
+				renderBar();
+				load();
+				return true;
+			};
+
+			const schluesselEl = document.querySelector(".schluessel");
+			const schluesselInput = schluesselEl.querySelector("input");
+			const schluesselFragen = () => {
+				schluesselEl.hidden = false;
+			};
+			schluesselInput.addEventListener("keydown", async (e) => {
+				if (e.key !== "Enter") return;
+				const wert = schluesselInput.value.trim();
+				if (!wert) return;
+				schluessel = wert;
+				localStorage.setItem(LK, schluessel);
+				schluesselEl.hidden = true;
+				const z = await serverLaden();
+				if (!uebernehmen(z) && schluessel) serverSichern();
+			});
+			if (!schluessel) schluesselFragen();
+			else
+				serverLaden().then((z) => {
+					if (!uebernehmen(z) && schluessel) serverSichern();
+				});
 		</script>
 	</body>
 </html>
