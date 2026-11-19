@@ -5,7 +5,11 @@ export default {
 		const url = new URL(request.url);
 		if (url.pathname === "/api/schreiben") {
 			const key = request.headers.get("x-schreib-key") || "";
-			if (!env.SCHREIB_KEY || key !== env.SCHREIB_KEY) {
+			// Secret am Worker oder Eintrag "schluessel" im Speicher —
+			// Preview-Versionen erben Secrets nicht zuverlässig
+			const soll = await env.SCHREIBEN.get("schluessel");
+			const ok = key && (key === env.SCHREIB_KEY || (soll && key === soll));
+			if (!ok) {
 				return new Response("kein Zutritt", { status: 401 });
 			}
 			if (request.method === "GET") {
