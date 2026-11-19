@@ -55,7 +55,15 @@
 				left: 0;
 				right: 0;
 				z-index: 10;
+			}
+			/* Die Fläche endet exakt am Strich des Lineals (Linienmitte
+			   liegt 13px über der Unterkante des Kopfes) */
+			.top::before {
+				content: "";
+				position: absolute;
+				inset: 0 0 13px;
 				background: var(--paper);
+				z-index: -1;
 			}
 			.bar {
 				display: flex;
@@ -63,7 +71,7 @@
 				gap: 1.5rem;
 			}
 			.projzeile {
-				padding: var(--pad) var(--pad) 0;
+				padding: calc(var(--pad) * 0.7) var(--pad) 0;
 			}
 			.projzeile button {
 				font-size: 0.85rem;
@@ -71,7 +79,9 @@
 			}
 			.proj.active .open {
 				color: var(--black);
-				font-style: italic;
+				text-decoration: underline;
+				text-underline-offset: 0.25em;
+				text-decoration-thickness: 1px;
 			}
 			.textzeile {
 				padding: 0.85rem var(--pad) 0.9rem;
@@ -193,7 +203,7 @@
 
 			/* Das Blatt: Otto wie auf den Textseiten, bündig am linken Rand */
 			main {
-				padding: calc(var(--pad) + 5.6rem) 0 50svh;
+				padding: calc(var(--pad) + 7.6rem) 0 50svh;
 			}
 			.sheet {
 				margin-left: var(--ml);
@@ -268,6 +278,10 @@
 			if (!Array.isArray(docs) || !docs.length) {
 				docs = [{ id: Date.now().toString(36), title: "", body: "" }];
 			}
+			// Projektzuordnung ist eine Liste; ältere Stände hatten einen String
+			for (const d of docs) {
+				if (typeof d.p === "string") d.p = [d.p];
+			}
 			let active = localStorage.getItem(LA);
 			if (!docs.some((d) => d.id === active)) active = docs[0].id;
 
@@ -317,7 +331,48 @@
 			};
 			addEventListener("beforeunload", persist);
 
-			const sichtbar = () => docs.filter((d) => !filter || d.p === filter);
+			const sichtbar = () => docs.filter((d) => !filter || (d.p || []).includes(filter));
+
+			// Cmd+Z macht Struktur-Schritte rückgängig (Sortieren, Zuordnen,
+			// Löschen, Projekte); im Text selbst übernimmt das native Undo
+			const undoStack = [];
+			const merken = () => {
+				undoStack.push(JSON.stringify({ docs, projekte, filter, active }));
+				if (undoStack.length > 100) undoStack.shift();
+			};
+			const undo = () => {
+				const s = undoStack.pop();
+				if (!s) return;
+				const z = JSON.parse(s);
+				docs = z.docs;
+				projekte = z.projekte;
+				filter = z.filter;
+				active = z.active;
+				persist();
+				renderBar();
+				load();
+			};
+			addEventListener("keydown", (e) => {
+				if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === "z") {
+					const ae = document.activeElement;
+					if (ae && ae.isContentEditable) return;
+					e.preventDefault();
+					undo();
+				}
+			});
+
+			// Option-Zustand auch über die Tastatur mitverfolgen, falls die
+			// Maus-Events den Modifier nicht tragen
+			let altGedrueckt = false;
+			addEventListener("keydown", (e) => {
+				if (e.key === "Alt") altGedrueckt = true;
+			});
+			addEventListener("keyup", (e) => {
+				if (e.key === "Alt") altGedrueckt = false;
+			});
+			addEventListener("blur", () => {
+				altGedrueckt = false;
+			});
 
 			// Ziehen in der Leiste: ab 6px wird sortiert statt geklickt;
 			// Texte lassen sich außerdem auf ein Projekt ziehen
@@ -328,16 +383,19 @@
 				btn.addEventListener("pointerdown", (e) => {
 					if (e.button !== 0 || btn.isContentEditable) return;
 					const x0 = e.clientX;
+					const y0 = e.clientY;
 					let aktiv = false;
 					let platz = -1;
 					let ziel = null;
+					let alt = e.altKey;
 					const aufraeumen = () => {
 						wrap.classList.remove("schwebt");
 						for (const el of zeile.children) el.classList.remove("mark", "mark-ende");
 						if (ziel) ziel.classList.remove("ziel");
 					};
 					const move = (ev) => {
-						if (!aktiv && Math.abs(ev.clientX - x0) < 6) return;
+						alt = alt || ev.altKey || altGedrueckt;
+						if (!aktiv && Math.hypot(ev.clientX - x0, ev.clientY - y0) < 6) return;
 						aktiv = true;
 						wrap.classList.add("schwebt");
 						for (const el of zeile.children) el.classList.remove("mark", "mark-ende");
@@ -364,16 +422,18 @@
 						if (platz < kinder.length) kinder[platz].classList.add("mark");
 						else if (kinder.length) kinder[kinder.length - 1].classList.add("mark-ende");
 					};
-					const up = () => {
+					const up = (ev) => {
 						btn.removeEventListener("pointermove", move);
 						const z = ziel;
 						const pl = platz;
 						const war = aktiv;
 						aufraeumen();
 						if (!war) beiKlick();
-						else beiDrop(pl, z);
+						else beiDrop(pl, z, ev.altKey || alt || altGedrueckt);
 					};
-					btn.setPointerCapture(e.pointerId);
+					try {
+						btn.setPointerCapture(e.pointerId);
+					} catch {}
 					btn.addEventListener("pointermove", move);
 					btn.addEventListener("pointerup", up, { once: true });
 					btn.addEventListener(
@@ -409,27 +469,35 @@
 				if (!vis.some((d) => d.id === active)) {
 					if (!vis.length) {
 						const d = { id: Date.now().toString(36), title: "", body: "" };
-						if (filter) d.p = filter;
+						if (filter) d.p = [filter];
 						docs.push(d);
 						vis.push(d);
 					}
 					active = vis[0].id;
 					persist();
-					renderBar();
+					renderDocs();
 					load();
 				}
 			};
 
+			// baut nur die Textzeile neu, damit die Projektknoten stehen
+			// bleiben und ein Doppelklick dort ankommt
 			const projektWechsel = (id) => {
 				filter = id;
 				persist();
-				renderBar();
+				for (const el of projsEl.children) el.classList.toggle("active", el.dataset.id === id);
+				renderDocs();
 				sichtNachziehen();
 			};
 
 			const projektWeg = (id) => {
+				merken();
 				projekte = projekte.filter((p) => p.id !== id);
-				for (const d of docs) if (d.p === id) delete d.p;
+				for (const d of docs)
+					if (d.p) {
+						d.p = d.p.filter((x) => x !== id);
+						if (!d.p.length) delete d.p;
+					}
 				if (filter === id) filter = "";
 				persist();
 				renderBar();
@@ -439,6 +507,7 @@
 			// Umbenennen speichert bei jeder Eingabe mit, weil blur im
 			// Hintergrund-Tab nicht zuverlässig kommt
 			const umbenennen = (open, p) => {
+				merken();
 				open.contentEditable = "plaintext-only";
 				open.focus();
 				try {
@@ -473,7 +542,7 @@
 				});
 			};
 
-			const renderBar = () => {
+			const renderProjs = () => {
 				projsEl.innerHTML = "";
 				const alle = [{ id: "", name: "Alle" }, ...projekte];
 				for (const p of alle) {
@@ -497,6 +566,7 @@
 						zieh(open, wrap, projsEl, false, () => projektWechsel(p.id), (platz) => {
 							const ref = platz < alle.length ? alle[platz] : null;
 							if (ref === p) return;
+							merken();
 							projekte.splice(projekte.indexOf(p), 1);
 							let i;
 							if (!ref) i = projekte.length;
@@ -512,7 +582,9 @@
 					}
 					projsEl.append(wrap);
 				}
+			};
 
+			const renderDocs = () => {
 				barEl.innerHTML = "";
 				const vis = sichtbar();
 				for (const d of vis) {
@@ -529,19 +601,28 @@
 					del.setAttribute("aria-label", labelFor(d) + " löschen");
 					del.addEventListener("click", () => removeDoc(d.id));
 					wrap.append(open, del);
-					zieh(open, wrap, barEl, true, () => switchTo(d.id), (platz, ziel) => {
+					zieh(open, wrap, barEl, true, () => switchTo(d.id), (platz, ziel, option) => {
+						merken();
 						if (ziel) {
-							if (ziel.dataset.id) d.p = ziel.dataset.id;
-							else delete d.p;
+							const zid = ziel.dataset.id;
+							// normal verschiebt, mit Option bleibt es auch im alten
+							if (!zid) delete d.p;
+							else if (option) d.p = [...new Set([...(d.p || []), zid])];
+							else d.p = [zid];
 						} else {
 							umsortieren(docs, d, vis, platz);
 						}
 						persist();
-						renderBar();
+						renderDocs();
 						sichtNachziehen();
 					});
 					barEl.append(wrap);
 				}
+			};
+
+			const renderBar = () => {
+				renderProjs();
+				renderDocs();
 			};
 
 			const load = () => {
@@ -562,6 +643,7 @@
 			};
 
 			const removeDoc = (id) => {
+				merken();
 				const gone = docs.find((d) => d.id === id);
 				let trash = [];
 				try {
@@ -572,23 +654,25 @@
 				docs = docs.filter((d) => d.id !== id);
 				if (active === id) active = "";
 				persist();
-				renderBar();
+				renderDocs();
 				sichtNachziehen();
 			};
 
 			document.querySelector(".new").addEventListener("click", () => {
 				persist();
+				merken();
 				const d = { id: Date.now().toString(36), title: "", body: "" };
-				if (filter) d.p = filter;
+				if (filter) d.p = [filter];
 				docs.push(d);
 				active = d.id;
 				persist();
-				renderBar();
+				renderDocs();
 				load();
 				titleEl.focus();
 			});
 
 			document.querySelector(".neuproj").addEventListener("click", () => {
+				merken();
 				const p = { id: Date.now().toString(36), name: "Projekt" };
 				projekte.push(p);
 				filter = p.id;
