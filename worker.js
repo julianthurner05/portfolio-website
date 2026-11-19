@@ -8,12 +8,20 @@ export default {
 			// Secret am Worker oder Eintrag "schluessel" im Speicher —
 			// Preview-Versionen erben Secrets nicht zuverlässig
 			let soll = null;
+			let kvFehler = "";
 			try {
 				soll = await env.SCHREIBEN.get("schluessel");
-			} catch {}
+			} catch (e) {
+				kvFehler = encodeURIComponent(String((e && e.message) || e)).slice(0, 120);
+			}
 			const ok = key && (key === env.SCHREIB_KEY || (soll && key === soll));
 			if (!ok) {
-				return new Response("kein Zutritt", { status: 401 });
+				return new Response("kein Zutritt", {
+					status: 401,
+					headers: {
+						"x-diag": "secret:" + (env.SCHREIB_KEY ? "da" : "fehlt") + " kv:" + (kvFehler ? "fehler=" + kvFehler : soll === null ? "leer" : "da"),
+					},
+				});
 			}
 			if (request.method === "GET") {
 				const stand = await env.SCHREIBEN.get("stand");
