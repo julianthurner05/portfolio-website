@@ -77,12 +77,13 @@
 				font-size: 0.85rem;
 				color: rgba(20, 20, 20, 0.55);
 			}
+			/* border statt text-decoration: Safari unterstreicht Buttons nicht */
 			.proj.active .open,
 			.papierkorb.active {
 				color: var(--black);
-				text-decoration: underline;
-				text-underline-offset: 0.22em;
-				text-decoration-thickness: 1.5px;
+				border-bottom: 1.5px solid currentColor;
+				padding-bottom: 1px;
+				margin-bottom: -2.5px;
 			}
 			.papierkorb {
 				margin-left: auto;
