@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="de">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="robots" content="noindex" />
+		<title>Schreiben – Julian Thurner</title>
+		<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+		<link rel="icon" href="favicon.png" type="image/png" sizes="96x96" />
+		<link rel="preload" href="fonts/ABCOtto-Light-Trial.otf" as="font" type="font/otf" crossorigin />
+		<link rel="preload" href="fonts/NeueMontreal-Regular.otf" as="font" type="font/otf" crossorigin />
+		<link rel="preload" href="fonts/NeueMontreal-Bold.otf" as="font" type="font/otf" crossorigin />
+		<style>
+			@font-face {
+				font-family: "ABC Otto";
+				src: url("fonts/ABCOtto-Light-Trial.otf") format("opentype");
+				font-weight: 300;
+				font-display: block;
+			}
+			@font-face {
+				font-family: "Neue Montreal";
+				src: url("fonts/NeueMontreal-Regular.otf") format("opentype");
+				font-weight: 400;
+				font-display: block;
+			}
+			@font-face {
+				font-family: "Neue Montreal";
+				src: url("fonts/NeueMontreal-Bold.otf") format("opentype");
+				font-weight: 700;
+				font-display: block;
+			}
+			:root {
+				--paper: #fcfcfc;
+				--black: #141414;
+				--pad: clamp(1.25rem, 3vw, 2.5rem);
+				--colw: 42rem;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			html,
+			body {
+				margin: 0;
+			}
+			body {
+				background: var(--paper);
+				color: var(--black);
+				font-family: "Neue Montreal", system-ui, sans-serif;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
+			}
+
+			/* Leiste mit den Texten, wie die Menüleiste der Seite */
+			.bar {
+				position: fixed;
+				top: 0;
+				left: 0;
+				right: 0;
+				z-index: 10;
+				display: flex;
+				align-items: baseline;
+				gap: 1.5rem;
+				padding: var(--pad);
+				background: linear-gradient(var(--paper) 55%, transparent);
+			}
+			.docs {
+				display: flex;
+				align-items: baseline;
+				gap: 1.4rem;
+				min-width: 0;
+				overflow-x: auto;
+				scrollbar-width: none;
+			}
+			.docs::-webkit-scrollbar {
+				display: none;
+			}
+			.doc {
+				display: inline-flex;
+				align-items: baseline;
+				gap: 0.35rem;
+				white-space: nowrap;
+			}
+			.bar button {
+				border: 0;
+				background: none;
+				color: inherit;
+				font: inherit;
+				font-size: 0.95rem;
+				padding: 0;
+				cursor: pointer;
+				-webkit-text-stroke: 0 var(--black);
+				transition: -webkit-text-stroke-width 0.25s ease, opacity 0.25s ease;
+			}
+			.bar button:hover {
+				-webkit-text-stroke-width: 0.55px;
+			}
+			.doc.active .open {
+				font-weight: 700;
+			}
+			.doc .del {
+				opacity: 0;
+				font-size: 0.85rem;
+			}
+			.doc:hover .del,
+			.doc .del:focus-visible {
+				opacity: 0.4;
+			}
+			.doc .del:hover {
+				opacity: 1;
+			}
+			.new {
+				font-size: 1.05rem;
+			}
+			.width {
+				margin-left: auto;
+				appearance: none;
+				-webkit-appearance: none;
+				align-self: center;
+				width: clamp(4rem, 8vw, 7rem);
+				height: 1.5px;
+				background: var(--black);
+				cursor: pointer;
+			}
+			.width::-webkit-slider-thumb {
+				-webkit-appearance: none;
+				width: 10px;
+				height: 10px;
+				border-radius: 50%;
+				background: var(--black);
+			}
+			.width::-moz-range-thumb {
+				width: 10px;
+				height: 10px;
+				border-radius: 50%;
+				background: var(--black);
+				border: 0;
+			}
+
+			/* Das Blatt: Otto wie auf den Textseiten */
+			main {
+				padding: calc(var(--pad) + 3.4rem) var(--pad) 50svh;
+			}
+			.sheet {
+				max-width: min(100%, var(--colw));
+				margin: 0 auto;
+				font-family: "ABC Otto", Georgia, "Times New Roman", serif;
+				font-weight: 300;
+				font-size: clamp(1.25rem, 2.3vw, 2rem);
+				line-height: 1.3;
+				letter-spacing: -0.03em;
+				caret-color: var(--black);
+			}
+			.title,
+			.body {
+				outline: none;
+				white-space: pre-wrap;
+			}
+			.title {
+				font-weight: 400;
+				margin-bottom: 1.45em;
+			}
+			.title:empty::before {
+				content: "Ohne Titel";
+				opacity: 0.25;
+			}
+			.body {
+				min-height: 40svh;
+			}
+			.body:empty::before {
+				content: "…";
+				opacity: 0.25;
+			}
+		</style>
+	</head>
+	<body>
+		<header class="bar">
+			<nav class="docs" aria-label="Texte"></nav>
+			<button class="new" aria-label="Neuer Text" type="button">+</button>
+			<input class="width" type="range" min="20" max="70" step="1" aria-label="Absatzbreite" />
+		</header>
+
+		<main>
+			<article class="sheet">
+				<div class="title" contenteditable="plaintext-only"></div>
+				<div class="body" contenteditable="plaintext-only"></div>
+			</article>
+		</main>
+
+		<script>
+			// Alles bleibt im Browser: Texte in localStorage, Gelöschtes
+			// wandert in einen Papierkorb-Schlüssel statt ganz zu verschwinden
+			const LS = "schreib-texte";
+			const LA = "schreib-aktiv";
+			const LW = "schreib-breite";
+			const LT = "schreib-papierkorb";
+
+			let docs = [];
+			try {
+				docs = JSON.parse(localStorage.getItem(LS) || "[]");
+			} catch {}
+			if (!Array.isArray(docs) || !docs.length) {
+				docs = [{ id: Date.now().toString(36), title: "", body: "" }];
+			}
+			let active = localStorage.getItem(LA);
+			if (!docs.some((d) => d.id === active)) active = docs[0].id;
+
+			const barEl = document.querySelector(".docs");
+			const titleEl = document.querySelector(".title");
+			const bodyEl = document.querySelector(".body");
+			const widthEl = document.querySelector(".width");
+
+			const cur = () => docs.find((d) => d.id === active);
+			const labelFor = (d) => d.title.trim() || "Ohne Titel";
+
+			// Chrome legt beim Tippen <div>-Blöcke an; innerText zählt dort
+			// Leerzeilen doppelt, textContent verliert sie — darum von Hand:
+			const textOf = (el) => {
+				let out = "";
+				for (const n of el.childNodes) {
+					if (n.nodeType === 3) out += n.data;
+					else if (n.nodeName === "BR") out += "\n";
+					else if (n.nodeType === 1) {
+						const inner = textOf(n);
+						if (out && !out.endsWith("\n")) out += "\n";
+						out += inner;
+						if (n.nextSibling && !out.endsWith("\n")) out += "\n";
+					}
+				}
+				return out;
+			};
+
+			let saveTimer = 0;
+			const persist = () => {
+				localStorage.setItem(LS, JSON.stringify(docs));
+				localStorage.setItem(LA, active);
+			};
+			const queueSave = () => {
+				clearTimeout(saveTimer);
+				saveTimer = setTimeout(persist, 300);
+			};
+			addEventListener("beforeunload", persist);
+
+			const renderBar = () => {
+				barEl.innerHTML = "";
+				for (const d of docs) {
+					const wrap = document.createElement("span");
+					wrap.className = "doc" + (d.id === active ? " active" : "");
+					const open = document.createElement("button");
+					open.type = "button";
+					open.className = "open";
+					open.textContent = labelFor(d);
+					open.addEventListener("click", () => switchTo(d.id));
+					const del = document.createElement("button");
+					del.type = "button";
+					del.className = "del";
+					del.textContent = "×";
+					del.setAttribute("aria-label", labelFor(d) + " löschen");
+					del.addEventListener("click", () => removeDoc(d.id));
+					wrap.append(open, del);
+					barEl.append(wrap);
+				}
+			};
+
+			const load = () => {
+				const d = cur();
+				titleEl.textContent = d.title;
+				bodyEl.textContent = d.body;
+				document.title = labelFor(d) + " – Schreiben";
+				scrollTo(0, 0);
+			};
+
+			const switchTo = (id) => {
+				if (id === active) return;
+				persist();
+				active = id;
+				persist();
+				renderBar();
+				load();
+			};
+
+			const removeDoc = (id) => {
+				const gone = docs.find((d) => d.id === id);
+				let trash = [];
+				try {
+					trash = JSON.parse(localStorage.getItem(LT) || "[]");
+				} catch {}
+				trash.push(gone);
+				localStorage.setItem(LT, JSON.stringify(trash));
+				docs = docs.filter((d) => d.id !== id);
+				if (!docs.length) docs = [{ id: Date.now().toString(36), title: "", body: "" }];
+				if (active === id) active = docs[0].id;
+				persist();
+				renderBar();
+				load();
+			};
+
+			document.querySelector(".new").addEventListener("click", () => {
+				persist();
+				const d = { id: Date.now().toString(36), title: "", body: "" };
+				docs.push(d);
+				active = d.id;
+				persist();
+				renderBar();
+				load();
+				titleEl.focus();
+			});
+
+			titleEl.addEventListener("input", () => {
+				cur().title = textOf(titleEl).replace(/\n/g, " ");
+				const b = barEl.querySelector(".doc.active .open");
+				if (b) b.textContent = labelFor(cur());
+				document.title = labelFor(cur()) + " – Schreiben";
+				queueSave();
+			});
+			bodyEl.addEventListener("input", () => {
+				cur().body = textOf(bodyEl);
+				queueSave();
+			});
+			titleEl.addEventListener("keydown", (e) => {
+				if (e.key === "Enter") {
+					e.preventDefault();
+					bodyEl.focus();
+				}
+			});
+			// Einfügen immer als reiner Text, auch wo plaintext-only fehlt
+			for (const el of [titleEl, bodyEl]) {
+				el.addEventListener("paste", (e) => {
+					e.preventDefault();
+					document.execCommand("insertText", false, e.clipboardData.getData("text/plain"));
+				});
+			}
+			addEventListener("keydown", (e) => {
+				if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+					e.preventDefault();
+					persist();
+				}
+			});
+
+			// Absatzbreite
+			const setWidth = (v) => {
+				document.documentElement.style.setProperty("--colw", v + "rem");
+			};
+			widthEl.value = localStorage.getItem(LW) || 42;
+			setWidth(widthEl.value);
+			widthEl.addEventListener("input", () => {
+				setWidth(widthEl.value);
+				localStorage.setItem(LW, widthEl.value);
+			});
+
+			renderBar();
+			load();
+		</script>
+	</body>
+</html>
