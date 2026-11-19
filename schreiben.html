@@ -1,0 +1,1025 @@
+<!doctype html>
+<html lang="de">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="robots" content="noindex" />
+		<title>Schreiben – Julian Thurner</title>
+		<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+		<link rel="icon" href="favicon.png" type="image/png" sizes="96x96" />
+		<link rel="preload" href="fonts/ABCOtto-Light-Trial.otf" as="font" type="font/otf" crossorigin />
+		<link rel="preload" href="fonts/ABCOtto-LightItalic-Trial.otf" as="font" type="font/otf" crossorigin />
+		<style>
+			@font-face {
+				font-family: "ABC Otto";
+				src: url("fonts/ABCOtto-Light-Trial.otf") format("opentype");
+				font-weight: 300;
+				font-display: block;
+			}
+			@font-face {
+				font-family: "ABC Otto";
+				src: url("fonts/ABCOtto-LightItalic-Trial.otf") format("opentype");
+				font-weight: 300;
+				font-style: italic;
+				font-display: block;
+			}
+			:root {
+				--paper: #fcfcfc;
+				--black: #141414;
+				--pad: clamp(1.25rem, 3vw, 2.5rem);
+				--ml: clamp(1.25rem, 3vw, 2.5rem);
+				--mr: min(94vw, 46rem);
+			}
+			* {
+				box-sizing: border-box;
+			}
+			html,
+			body {
+				margin: 0;
+			}
+			body {
+				background: var(--paper);
+				color: var(--black);
+				font-family: "ABC Otto", Georgia, "Times New Roman", serif;
+				font-weight: 300;
+				font-variant-numeric: lining-nums;
+				font-feature-settings: "lnum" 1, "onum" 0;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
+			}
+
+			/* Kopf: Textleiste, darunter das Lineal, das die Ränder setzt */
+			.top {
+				position: fixed;
+				top: 0;
+				left: 0;
+				right: 0;
+				z-index: 10;
+			}
+			/* Die Fläche endet exakt am Strich des Lineals (Linienmitte
+			   liegt 13px über der Unterkante des Kopfes) */
+			.top::before {
+				content: "";
+				position: absolute;
+				inset: 0 0 13px;
+				background: var(--paper);
+				z-index: -1;
+			}
+			.bar {
+				display: flex;
+				align-items: baseline;
+				gap: 1.5rem;
+			}
+			.projzeile {
+				padding: calc(var(--pad) * 0.7) var(--pad) 0;
+			}
+			.projzeile button {
+				font-size: 0.85rem;
+				color: rgba(20, 20, 20, 0.55);
+			}
+			.proj.active .open,
+			.papierkorb.active {
+				color: var(--black);
+				text-decoration: underline;
+				text-underline-offset: 0.22em;
+				text-decoration-thickness: 1.5px;
+			}
+			.papierkorb {
+				margin-left: auto;
+			}
+			body.im-papierkorb .new {
+				visibility: hidden;
+			}
+			.textzeile {
+				padding: 0.85rem var(--pad) 0.9rem;
+			}
+			/* Ziehen: Gezogenes schwebt, ein feiner Strich markiert den
+			   Einfügeplatz, ein Projekt unterm Zeiger wird kräftiger */
+			.schwebt {
+				opacity: 0.35;
+			}
+			.mark {
+				border-left: 1px solid rgba(20, 20, 20, 0.5);
+				margin-left: -1px;
+			}
+			.mark-ende {
+				border-right: 1px solid rgba(20, 20, 20, 0.5);
+				margin-right: -1px;
+			}
+			.ziel .open {
+				-webkit-text-stroke-width: 0.45px;
+			}
+			.docs,
+			.projs {
+				display: flex;
+				align-items: baseline;
+				gap: 1.4rem;
+				min-width: 0;
+				overflow-x: auto;
+				scrollbar-width: none;
+			}
+			.docs::-webkit-scrollbar,
+			.projs::-webkit-scrollbar {
+				display: none;
+			}
+			.doc,
+			.proj {
+				display: inline-flex;
+				align-items: baseline;
+				gap: 0.35rem;
+				white-space: nowrap;
+			}
+			.bar button {
+				border: 0;
+				background: none;
+				color: inherit;
+				font: inherit;
+				font-size: 1rem;
+				padding: 0;
+				cursor: pointer;
+				-webkit-text-stroke: 0 currentColor;
+				transition: -webkit-text-stroke-width 0.25s ease, opacity 0.25s ease;
+			}
+			.bar button:hover {
+				-webkit-text-stroke-width: 0.45px;
+			}
+			.doc.active .open {
+				font-style: italic;
+			}
+			.doc .del,
+			.proj .del {
+				opacity: 0;
+				font-size: 0.85rem;
+			}
+			.doc:hover .del,
+			.proj:hover .del,
+			.doc .del:focus-visible,
+			.proj .del:focus-visible {
+				opacity: 0.4;
+			}
+			.doc .del:hover,
+			.proj .del:hover {
+				opacity: 1;
+			}
+			.new {
+				font-size: 1.05rem;
+			}
+
+			/* Das Lineal: volle Breite, die schwarze Strecke ist der
+			   Schreibbereich; Enden ziehen die Ränder, die Mitte das Ganze */
+			.ruler {
+				position: relative;
+				height: 26px;
+				touch-action: none;
+			}
+			.ruler::before {
+				content: "";
+				position: absolute;
+				left: var(--pad);
+				right: var(--pad);
+				top: 50%;
+				height: 1px;
+				translate: 0 -50%;
+				background: rgba(20, 20, 20, 0.08);
+			}
+			.ruler .span {
+				position: absolute;
+				top: 50%;
+				translate: 0 -50%;
+				height: 1px;
+				background: rgba(20, 20, 20, 0.55);
+				left: var(--ml);
+				width: calc(var(--mr) - var(--ml));
+			}
+			.ruler .span::before,
+			.ruler .span::after {
+				content: "";
+				position: absolute;
+				top: 50%;
+				translate: 0 -50%;
+				width: 1px;
+				height: 7px;
+				background: rgba(20, 20, 20, 0.55);
+			}
+			.ruler .span::before {
+				left: 0;
+			}
+			.ruler .span::after {
+				right: 0;
+			}
+
+			/* Das Blatt: Otto wie auf den Textseiten, bündig am linken Rand */
+			main {
+				padding: calc(var(--pad) + 7.6rem) 0 50svh;
+			}
+			.sheet {
+				margin-left: var(--ml);
+				width: calc(var(--mr) - var(--ml));
+				font-family: "ABC Otto", Georgia, "Times New Roman", serif;
+				font-weight: 300;
+				font-size: clamp(1.25rem, 2.3vw, 2rem);
+				line-height: 1.3;
+				letter-spacing: -0.03em;
+				font-variant-numeric: lining-nums;
+				font-feature-settings: "lnum" 1, "onum" 0;
+				caret-color: var(--black);
+			}
+			.title,
+			.body {
+				outline: none;
+				white-space: pre-wrap;
+			}
+			.title {
+				font-weight: 400;
+				margin-bottom: 1.45em;
+			}
+			.title:empty::before {
+				content: "Ohne Titel";
+				opacity: 0.25;
+			}
+			.body {
+				min-height: 40svh;
+			}
+			.body:empty::before {
+				content: "…";
+				opacity: 0.25;
+			}
+
+			/* Einmal pro Browser: der Schlüssel zum gemeinsamen Speicher */
+			.schluessel {
+				margin: 0 var(--pad) 2.5rem var(--ml);
+			}
+			.schluessel input {
+				font-family: "ABC Otto", Georgia, serif;
+				font-weight: 300;
+				font-size: 1.1rem;
+				color: var(--black);
+				border: 0;
+				border-bottom: 1.5px solid var(--black);
+				background: none;
+				outline: none;
+				padding: 0.2rem 0;
+				width: 14rem;
+			}
+			.schluessel input::placeholder {
+				color: rgba(20, 20, 20, 0.35);
+			}
+		</style>
+	</head>
+	<body>
+		<header class="top">
+			<div class="bar projzeile">
+				<nav class="projs" aria-label="Projekte"></nav>
+				<button class="neuproj" aria-label="Neues Projekt" type="button">+</button>
+				<button class="papierkorb" type="button">Papierkorb</button>
+			</div>
+			<div class="bar textzeile">
+				<nav class="docs" aria-label="Texte"></nav>
+				<button class="new" aria-label="Neuer Text" type="button">+</button>
+			</div>
+			<div class="ruler" aria-label="Ränder des Schreibbereichs">
+				<div class="span"></div>
+			</div>
+		</header>
+
+		<main>
+			<div class="schluessel" hidden>
+				<input type="password" placeholder="Schlüssel" aria-label="Schlüssel für den gemeinsamen Speicher" />
+			</div>
+			<article class="sheet">
+				<div class="title" contenteditable="plaintext-only"></div>
+				<div class="body" contenteditable="plaintext-only"></div>
+			</article>
+		</main>
+
+		<script>
+			// Alles bleibt im Browser: Texte in localStorage, Gelöschtes
+			// wandert in einen Papierkorb-Schlüssel statt ganz zu verschwinden
+			const LS = "schreib-texte";
+			const LA = "schreib-aktiv";
+			const LW = "schreib-breite";
+			const LT = "schreib-papierkorb";
+			const LP = "schreib-projekte";
+			const LF = "schreib-projekt";
+
+			let docs = [];
+			try {
+				docs = JSON.parse(localStorage.getItem(LS) || "[]");
+			} catch {}
+			if (!Array.isArray(docs) || !docs.length) {
+				docs = [{ id: Date.now().toString(36), title: "", body: "" }];
+			}
+			// Projektzuordnung ist eine Liste; ältere Stände hatten einen String
+			for (const d of docs) {
+				if (typeof d.p === "string") d.p = [d.p];
+			}
+			const datumsTitel = () =>
+				new Date().toLocaleDateString("de-AT", { day: "numeric", month: "long", year: "numeric" });
+			let active = localStorage.getItem(LA);
+			if (!docs.some((d) => d.id === active)) active = docs[0].id;
+
+			let projekte = [];
+			try {
+				projekte = JSON.parse(localStorage.getItem(LP) || "[]");
+			} catch {}
+			if (!Array.isArray(projekte)) projekte = [];
+			// das Projekt fürs Automatische Schreiben gibt es immer; neue
+			// Texte darin heißen automatisch nach dem Tag
+			if (!projekte.some((p) => p.auto)) {
+				projekte.unshift({ id: Date.now().toString(36), name: "Automatisches Schreiben", auto: true });
+			}
+			let filter = localStorage.getItem(LF) || "";
+			if (!projekte.some((p) => p.id === filter)) filter = projekte[0].id;
+			// jeder Text gehört zu mindestens einem Projekt
+			for (const d of docs) {
+				if (d.p) d.p = d.p.filter((id) => projekte.some((p) => p.id === id));
+				if (!d.p || !d.p.length) d.p = [projekte[0].id];
+			}
+			const aktuellesProjekt = () => projekte.find((p) => p.id === filter);
+			// auch der allererste Text eines frischen Stands heißt nach dem Tag
+			if (docs.length === 1 && !docs[0].title && !docs[0].body) {
+				const pr = aktuellesProjekt();
+				if (pr && pr.auto) docs[0].title = datumsTitel();
+			}
+
+			const barEl = document.querySelector(".docs");
+			const projsEl = document.querySelector(".projs");
+			const pkBtn = document.querySelector(".papierkorb");
+			const titleEl = document.querySelector(".title");
+			const bodyEl = document.querySelector(".body");
+			let imPapierkorb = false;
+			let trashOffen = null;
+			const papierkorbListe = () => {
+				try {
+					return (JSON.parse(localStorage.getItem(LT) || "[]") || []).filter(Boolean);
+				} catch {
+					return [];
+				}
+			};
+
+			const cur = () => docs.find((d) => d.id === active);
+			const labelFor = (d) => d.title.trim() || "Ohne Titel";
+
+			// Chrome legt beim Tippen <div>-Blöcke an; innerText zählt dort
+			// Leerzeilen doppelt, textContent verliert sie — darum von Hand:
+			const textOf = (el) => {
+				let out = "";
+				for (const n of el.childNodes) {
+					if (n.nodeType === 3) out += n.data;
+					else if (n.nodeName === "BR") out += "\n";
+					else if (n.nodeType === 1) {
+						const inner = textOf(n);
+						if (out && !out.endsWith("\n")) out += "\n";
+						out += inner;
+						if (n.nextSibling && !out.endsWith("\n")) out += "\n";
+					}
+				}
+				return out;
+			};
+
+			// Gemeinsamer Stand am Server: alle Browser sehen dasselbe,
+			// sobald der Schlüssel einmal eingegeben ist
+			const LK = "schreib-schluessel";
+			let schluessel = localStorage.getItem(LK) || "";
+			let syncTimer = 0;
+			const serverSichern = () => {
+				if (!schluessel) return;
+				clearTimeout(syncTimer);
+				syncTimer = setTimeout(() => {
+					fetch("/api/schreiben", {
+						method: "PUT",
+						headers: { "x-schreib-key": schluessel, "content-type": "application/json" },
+						body: JSON.stringify({ docs, projekte, filter, active, papierkorb: papierkorbListe(), t: Date.now() }),
+					}).catch(() => {});
+				}, 800);
+			};
+			const serverLaden = async () => {
+				if (!schluessel) return null;
+				try {
+					const r = await fetch("/api/schreiben", { headers: { "x-schreib-key": schluessel } });
+					if (r.status === 401) {
+						schluessel = "";
+						localStorage.removeItem(LK);
+						schluesselFragen();
+						return null;
+					}
+					if (!r.ok) return null;
+					return await r.json();
+				} catch {
+					return null;
+				}
+			};
+
+			let saveTimer = 0;
+			let ungesichert = false;
+			const persist = () => {
+				ungesichert = false;
+				localStorage.setItem(LS, JSON.stringify(docs));
+				localStorage.setItem(LA, active);
+				localStorage.setItem(LP, JSON.stringify(projekte));
+				localStorage.setItem(LF, filter);
+				serverSichern();
+			};
+			const queueSave = () => {
+				ungesichert = true;
+				clearTimeout(saveTimer);
+				saveTimer = setTimeout(persist, 300);
+			};
+			// nur schreiben, wenn dieser Tab wirklich etwas geändert hat —
+			// sonst überschreibt ein alter Tab beim Schließen neuere Stände
+			addEventListener("beforeunload", () => {
+				if (ungesichert) persist();
+			});
+			// Änderungen aus anderen Tabs übernehmen, solange hier nicht
+			// gerade geschrieben wird
+			addEventListener("storage", (e) => {
+				if (e.key !== LS && e.key !== LP) return;
+				if (document.hasFocus()) return;
+				try {
+					docs = JSON.parse(localStorage.getItem(LS) || "[]") || [];
+					projekte = JSON.parse(localStorage.getItem(LP) || "[]") || [];
+					filter = localStorage.getItem(LF) || filter;
+					active = localStorage.getItem(LA) || active;
+					renderBar();
+					load();
+				} catch {}
+			});
+
+			const sichtbar = () => docs.filter((d) => (d.p || []).includes(filter));
+
+			// Cmd+Z macht Struktur-Schritte rückgängig, Cmd+Shift+Z wieder
+			// her; im Text selbst übernimmt das native Undo. Texte, die ein
+			// Undo entfernen würde, sichert der Papierkorb.
+			const undoStack = [];
+			const redoStack = [];
+			const stand = () => JSON.stringify({ docs, projekte, filter, active });
+			const merken = () => {
+				undoStack.push(stand());
+				redoStack.length = 0;
+				if (undoStack.length > 100) undoStack.shift();
+			};
+			const inPapierkorb = (weg) => {
+				if (!weg.length) return;
+				let trash = [];
+				try {
+					trash = JSON.parse(localStorage.getItem(LT) || "[]");
+				} catch {}
+				trash.push(...weg);
+				localStorage.setItem(LT, JSON.stringify(trash));
+			};
+			const herstellen = (s) => {
+				const z = JSON.parse(s);
+				const bleiben = new Set(z.docs.map((d) => d.id));
+				inPapierkorb(docs.filter((d) => !bleiben.has(d.id) && (d.title || d.body)));
+				docs = z.docs;
+				projekte = z.projekte;
+				filter = z.filter;
+				active = z.active;
+				persist();
+				renderBar();
+				load();
+			};
+			const undo = () => {
+				if (!undoStack.length) return;
+				redoStack.push(stand());
+				herstellen(undoStack.pop());
+			};
+			const redo = () => {
+				if (!redoStack.length) return;
+				undoStack.push(stand());
+				herstellen(redoStack.pop());
+			};
+			addEventListener("keydown", (e) => {
+				if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
+					const ae = document.activeElement;
+					if (ae && ae.isContentEditable) return;
+					e.preventDefault();
+					if (e.shiftKey) redo();
+					else undo();
+				}
+			});
+
+			// Option-Zustand auch über die Tastatur mitverfolgen, falls die
+			// Maus-Events den Modifier nicht tragen
+			let altGedrueckt = false;
+			addEventListener("keydown", (e) => {
+				if (e.key === "Alt") altGedrueckt = true;
+			});
+			addEventListener("keyup", (e) => {
+				if (e.key === "Alt") altGedrueckt = false;
+			});
+			addEventListener("blur", () => {
+				altGedrueckt = false;
+			});
+
+			// Ziehen in der Leiste: ab 6px wird sortiert statt geklickt;
+			// Texte lassen sich außerdem auf ein Projekt ziehen
+			const zieh = (btn, wrap, zeile, aufProjekt, beiKlick, beiDrop) => {
+				btn.addEventListener("click", (e) => {
+					if (e.detail === 0) beiKlick(); // Tastatur
+				});
+				btn.addEventListener("pointerdown", (e) => {
+					if (e.button !== 0 || btn.isContentEditable) return;
+					const x0 = e.clientX;
+					const y0 = e.clientY;
+					let aktiv = false;
+					let platz = -1;
+					let ziel = null;
+					let alt = e.altKey;
+					const aufraeumen = () => {
+						wrap.classList.remove("schwebt");
+						for (const el of zeile.children) el.classList.remove("mark", "mark-ende");
+						if (ziel) ziel.classList.remove("ziel");
+					};
+					const move = (ev) => {
+						alt = alt || ev.altKey || altGedrueckt;
+						if (!aktiv && Math.hypot(ev.clientX - x0, ev.clientY - y0) < 6) return;
+						aktiv = true;
+						wrap.classList.add("schwebt");
+						for (const el of zeile.children) el.classList.remove("mark", "mark-ende");
+						if (ziel) ziel.classList.remove("ziel");
+						ziel = null;
+						if (aufProjekt) {
+							const unter = document.elementFromPoint(ev.clientX, ev.clientY);
+							const p = unter && unter.closest(".proj");
+							if (p) {
+								ziel = p;
+								p.classList.add("ziel");
+								return;
+							}
+						}
+						const kinder = [...zeile.children];
+						platz = kinder.length;
+						for (let k = 0; k < kinder.length; k++) {
+							const r = kinder[k].getBoundingClientRect();
+							if (ev.clientX < r.left + r.width / 2) {
+								platz = k;
+								break;
+							}
+						}
+						if (platz < kinder.length) kinder[platz].classList.add("mark");
+						else if (kinder.length) kinder[kinder.length - 1].classList.add("mark-ende");
+					};
+					const up = (ev) => {
+						btn.removeEventListener("pointermove", move);
+						const z = ziel;
+						const pl = platz;
+						const war = aktiv;
+						aufraeumen();
+						if (!war) beiKlick();
+						else beiDrop(pl, z, ev.altKey || alt || altGedrueckt);
+					};
+					try {
+						btn.setPointerCapture(e.pointerId);
+					} catch {}
+					btn.addEventListener("pointermove", move);
+					btn.addEventListener("pointerup", up, { once: true });
+					btn.addEventListener(
+						"pointercancel",
+						() => {
+							btn.removeEventListener("pointermove", move);
+							aufraeumen();
+						},
+						{ once: true }
+					);
+				});
+			};
+
+			// platz ist der Einfügeindex in der sichtbaren Zeile
+			const umsortieren = (liste, element, zeile, platz) => {
+				const ref = platz < zeile.length ? zeile[platz] : null;
+				if (ref === element) return;
+				liste.splice(liste.indexOf(element), 1);
+				let i;
+				if (ref) i = liste.indexOf(ref);
+				else {
+					const letzt = zeile.filter((x) => x !== element).pop();
+					i = letzt ? liste.indexOf(letzt) + 1 : liste.length;
+				}
+				if (i < 0) i = 0;
+				liste.splice(i, 0, element);
+			};
+
+			// stellt sicher, dass der aktive Text in der Auswahl sichtbar
+			// ist; eine leere Auswahl bekommt einen frischen Text
+			const sichtNachziehen = () => {
+				const vis = sichtbar();
+				if (!vis.some((d) => d.id === active)) {
+					if (!vis.length) {
+						const pr = aktuellesProjekt();
+						const d = {
+							id: Date.now().toString(36),
+							title: pr && pr.auto ? datumsTitel() : "",
+							body: "",
+							p: [filter],
+						};
+						docs.push(d);
+						vis.push(d);
+					}
+					active = vis[0].id;
+					persist();
+					renderDocs();
+					load();
+				}
+			};
+
+			// baut nur die Textzeile neu, damit die Projektknoten stehen
+			// bleiben und ein Doppelklick dort ankommt
+			const projektWechsel = (id) => {
+				imPapierkorb = false;
+				trashOffen = null;
+				document.body.classList.remove("im-papierkorb");
+				pkBtn.classList.remove("active");
+				filter = id;
+				persist();
+				for (const el of projsEl.children) el.classList.toggle("active", el.dataset.id === id);
+				renderDocs();
+				load();
+				sichtNachziehen();
+			};
+
+			const projektWeg = (id) => {
+				merken();
+				projekte = projekte.filter((p) => p.id !== id);
+				if (!projekte.some((p) => p.auto)) {
+					projekte.unshift({ id: Date.now().toString(36), name: "Automatisches Schreiben", auto: true });
+				}
+				if (filter === id) filter = projekte[0].id;
+				for (const d of docs) {
+					if (d.p) d.p = d.p.filter((x) => x !== id);
+					if (!d.p || !d.p.length) d.p = [projekte[0].id];
+				}
+				persist();
+				renderBar();
+				sichtNachziehen();
+			};
+
+			// Umbenennen speichert bei jeder Eingabe mit, weil blur im
+			// Hintergrund-Tab nicht zuverlässig kommt
+			const umbenennen = (open, p) => {
+				merken();
+				open.contentEditable = "plaintext-only";
+				open.focus();
+				try {
+					getSelection().selectAllChildren(open);
+				} catch {}
+				const tippt = () => {
+					p.name = open.textContent.replace(/\n/g, " ").trim() || "Projekt";
+					queueSave();
+				};
+				open.addEventListener("input", tippt);
+				let zu = false;
+				const draussen = (e) => {
+					if (!open.contains(e.target)) fertig();
+				};
+				const fertig = () => {
+					if (zu) return;
+					zu = true;
+					document.removeEventListener("pointerdown", draussen);
+					open.removeEventListener("input", tippt);
+					open.contentEditable = "false";
+					tippt();
+					persist();
+					renderBar();
+				};
+				setTimeout(() => document.addEventListener("pointerdown", draussen), 0);
+				open.addEventListener("blur", fertig, { once: true });
+				open.addEventListener("keydown", (e) => {
+					if (e.key === "Enter") {
+						e.preventDefault();
+						fertig();
+					}
+				});
+			};
+
+			const renderProjs = () => {
+				projsEl.innerHTML = "";
+				const alle = [...projekte];
+				for (const p of alle) {
+					const wrap = document.createElement("span");
+					wrap.className = "proj" + (p.id === filter ? " active" : "");
+					wrap.dataset.id = p.id;
+					const open = document.createElement("button");
+					open.type = "button";
+					open.className = "open";
+					open.textContent = p.name;
+					open.addEventListener("dblclick", () => umbenennen(open, p));
+					const del = document.createElement("button");
+					del.type = "button";
+					del.className = "del";
+					del.textContent = "×";
+					del.setAttribute("aria-label", p.name + " auflösen");
+					del.addEventListener("click", () => projektWeg(p.id));
+					wrap.append(open, del);
+					zieh(open, wrap, projsEl, false, () => projektWechsel(p.id), (platz) => {
+						merken();
+						umsortieren(projekte, p, alle, platz);
+						persist();
+						renderProjs();
+					});
+					projsEl.append(wrap);
+				}
+			};
+
+			const renderDocs = () => {
+				barEl.innerHTML = "";
+				if (imPapierkorb) {
+					// Papierkorb: Texte nur lesbar; Ziehen auf ein Projekt
+					// stellt wieder her
+					for (const d of papierkorbListe()) {
+						const wrap = document.createElement("span");
+						wrap.className = "doc" + (d.id === trashOffen ? " active" : "");
+						const open = document.createElement("button");
+						open.type = "button";
+						open.className = "open";
+						open.textContent = labelFor(d);
+						wrap.append(open);
+						zieh(open, wrap, barEl, true, () => {
+							trashOffen = d.id;
+							titleEl.contentEditable = "false";
+							bodyEl.contentEditable = "false";
+							titleEl.textContent = d.title;
+							bodyEl.textContent = d.body;
+							document.title = labelFor(d) + " – Papierkorb";
+							renderDocs();
+						}, (platz, ziel) => {
+							if (!ziel) return;
+							merken();
+							const rest = papierkorbListe().filter((x) => x.id !== d.id);
+							localStorage.setItem(LT, JSON.stringify(rest));
+							d.p = [ziel.dataset.id];
+							docs.push(d);
+							active = d.id;
+							persist();
+							projektWechsel(ziel.dataset.id);
+						});
+						barEl.append(wrap);
+					}
+					return;
+				}
+				const vis = sichtbar();
+				for (const d of vis) {
+					const wrap = document.createElement("span");
+					wrap.className = "doc" + (d.id === active ? " active" : "");
+					const open = document.createElement("button");
+					open.type = "button";
+					open.className = "open";
+					open.textContent = labelFor(d);
+					const del = document.createElement("button");
+					del.type = "button";
+					del.className = "del";
+					del.textContent = "×";
+					del.setAttribute("aria-label", labelFor(d) + " löschen");
+					del.addEventListener("click", () => removeDoc(d.id));
+					wrap.append(open, del);
+					zieh(open, wrap, barEl, true, () => switchTo(d.id), (platz, ziel, option) => {
+						merken();
+						if (ziel) {
+							const zid = ziel.dataset.id;
+							// normal verschiebt, mit Option bleibt es auch im alten
+							if (option) d.p = [...new Set([...(d.p || []), zid])];
+							else d.p = [zid];
+						} else {
+							umsortieren(docs, d, vis, platz);
+						}
+						persist();
+						renderDocs();
+						sichtNachziehen();
+					});
+					barEl.append(wrap);
+				}
+			};
+
+			const renderBar = () => {
+				renderProjs();
+				renderDocs();
+			};
+
+			const load = () => {
+				const d = cur();
+				if (!d) return;
+				titleEl.contentEditable = "plaintext-only";
+				bodyEl.contentEditable = "plaintext-only";
+				titleEl.textContent = d.title;
+				bodyEl.textContent = d.body;
+				document.title = labelFor(d) + " – Schreiben";
+				scrollTo(0, 0);
+			};
+
+			const switchTo = (id) => {
+				if (id === active) return;
+				persist();
+				active = id;
+				persist();
+				renderBar();
+				load();
+			};
+
+			const removeDoc = (id) => {
+				merken();
+				const gone = docs.find((d) => d.id === id);
+				let trash = [];
+				try {
+					trash = JSON.parse(localStorage.getItem(LT) || "[]");
+				} catch {}
+				trash.push(gone);
+				localStorage.setItem(LT, JSON.stringify(trash));
+				docs = docs.filter((d) => d.id !== id);
+				if (active === id) active = "";
+				persist();
+				renderDocs();
+				sichtNachziehen();
+			};
+
+			document.querySelector(".new").addEventListener("click", () => {
+				persist();
+				merken();
+				const pr = aktuellesProjekt();
+				const d = {
+					id: Date.now().toString(36),
+					title: pr && pr.auto ? datumsTitel() : "",
+					body: "",
+					p: [filter],
+				};
+				docs.push(d);
+				active = d.id;
+				persist();
+				renderDocs();
+				load();
+				(pr && pr.auto ? bodyEl : titleEl).focus();
+			});
+
+			pkBtn.addEventListener("click", () => {
+				imPapierkorb = true;
+				trashOffen = null;
+				document.body.classList.add("im-papierkorb");
+				pkBtn.classList.add("active");
+				for (const el of projsEl.children) el.classList.remove("active");
+				renderDocs();
+				titleEl.contentEditable = "false";
+				bodyEl.contentEditable = "false";
+				titleEl.textContent = "";
+				bodyEl.textContent = "";
+				document.title = "Papierkorb – Schreiben";
+			});
+
+			document.querySelector(".neuproj").addEventListener("click", () => {
+				merken();
+				const p = { id: Date.now().toString(36), name: "Projekt" };
+				projekte.push(p);
+				filter = p.id;
+				persist();
+				renderBar();
+				sichtNachziehen();
+				const el = projsEl.querySelector('.proj[data-id="' + p.id + '"] .open');
+				if (el) umbenennen(el, p);
+			});
+
+			titleEl.addEventListener("input", () => {
+				cur().title = textOf(titleEl).replace(/\n/g, " ");
+				const b = barEl.querySelector(".doc.active .open");
+				if (b) b.textContent = labelFor(cur());
+				document.title = labelFor(cur()) + " – Schreiben";
+				queueSave();
+			});
+			bodyEl.addEventListener("input", () => {
+				cur().body = textOf(bodyEl);
+				queueSave();
+			});
+			titleEl.addEventListener("keydown", (e) => {
+				if (e.key === "Enter") {
+					e.preventDefault();
+					bodyEl.focus();
+				}
+			});
+			// Einfügen immer als reiner Text, auch wo plaintext-only fehlt
+			for (const el of [titleEl, bodyEl]) {
+				el.addEventListener("paste", (e) => {
+					e.preventDefault();
+					document.execCommand("insertText", false, e.clipboardData.getData("text/plain"));
+				});
+			}
+			addEventListener("keydown", (e) => {
+				if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+					e.preventDefault();
+					persist();
+				}
+			});
+
+			// Lineal: Enden ziehen die Ränder, die Mitte verschiebt den
+			// Bereich als Ganzes; alles in Pixeln, gemerkt in localStorage
+			const ruler = document.querySelector(".ruler");
+			const MIN = 160;
+			const padPx = () => parseFloat(getComputedStyle(document.querySelector(".bar")).paddingLeft) || 40;
+			let ml, mr;
+			try {
+				({ l: ml, r: mr } = JSON.parse(localStorage.getItem(LW)));
+			} catch {}
+			if (!(ml >= 0) || !(mr > ml)) {
+				ml = padPx();
+				mr = ml + 672;
+			}
+			const clampM = () => {
+				const p = padPx();
+				ml = Math.max(p, Math.min(ml, innerWidth - p - MIN));
+				mr = Math.max(ml + MIN, Math.min(mr, innerWidth - p));
+			};
+			const applyM = () => {
+				clampM();
+				document.documentElement.style.setProperty("--ml", ml + "px");
+				document.documentElement.style.setProperty("--mr", mr + "px");
+				localStorage.setItem(LW, JSON.stringify({ l: ml, r: mr }));
+			};
+			applyM();
+			addEventListener("resize", applyM);
+
+			const GRIFF = 18;
+			const zone = (x) =>
+				Math.abs(x - ml) <= GRIFF ? "l" : Math.abs(x - mr) <= GRIFF ? "r" : x > ml && x < mr ? "m" : null;
+			ruler.addEventListener("pointermove", (e) => {
+				if (ziehen) return;
+				const z = zone(e.clientX);
+				ruler.style.cursor = z === "m" ? "grab" : z ? "ew-resize" : "";
+			});
+			let ziehen = null;
+			ruler.addEventListener("pointerdown", (e) => {
+				const z = zone(e.clientX);
+				if (!z) return;
+				ziehen = { z, x: e.clientX, l: ml, r: mr };
+				ruler.setPointerCapture(e.pointerId);
+				if (z === "m") ruler.style.cursor = "grabbing";
+			});
+			ruler.addEventListener("pointermove", (e) => {
+				if (!ziehen) return;
+				const dx = e.clientX - ziehen.x;
+				if (ziehen.z === "l") ml = Math.min(ziehen.l + dx, mr - MIN);
+				else if (ziehen.z === "r") mr = Math.max(ziehen.r + dx, ml + MIN);
+				else {
+					const b = ziehen.r - ziehen.l;
+					const p = padPx();
+					ml = Math.max(p, Math.min(ziehen.l + dx, innerWidth - p - b));
+					mr = ml + b;
+				}
+				applyM();
+			});
+			const zuEnde = () => {
+				ziehen = null;
+				ruler.style.cursor = "";
+			};
+			ruler.addEventListener("pointerup", zuEnde);
+			ruler.addEventListener("pointercancel", zuEnde);
+
+			renderBar();
+			load();
+
+			// Serverstand übernehmen (er gewinnt), oder den lokalen hochladen
+			const uebernehmen = (z) => {
+				if (!z || !Array.isArray(z.docs) || !Array.isArray(z.projekte)) return false;
+				docs = z.docs;
+				projekte = z.projekte;
+				filter = z.filter || filter;
+				active = z.active || active;
+				if (!projekte.some((p) => p.auto)) {
+					projekte.unshift({ id: Date.now().toString(36), name: "Automatisches Schreiben", auto: true });
+				}
+				if (!projekte.some((p) => p.id === filter)) filter = projekte[0].id;
+				for (const d of docs) {
+					if (typeof d.p === "string") d.p = [d.p];
+					if (d.p) d.p = d.p.filter((id) => projekte.some((p) => p.id === id));
+					if (!d.p || !d.p.length) d.p = [projekte[0].id];
+				}
+				if (!docs.length) {
+					const pr = projekte.find((p) => p.id === filter);
+					docs = [{ id: Date.now().toString(36), title: pr && pr.auto ? datumsTitel() : "", body: "", p: [filter] }];
+				}
+				if (!docs.some((d) => d.id === active)) active = (sichtbar()[0] || docs[0]).id;
+				if (Array.isArray(z.papierkorb)) localStorage.setItem(LT, JSON.stringify(z.papierkorb));
+				persist();
+				renderBar();
+				load();
+				return true;
+			};
+
+			const schluesselEl = document.querySelector(".schluessel");
+			const schluesselInput = schluesselEl.querySelector("input");
+			const schluesselFragen = () => {
+				schluesselEl.hidden = false;
+			};
+			schluesselInput.addEventListener("keydown", async (e) => {
+				if (e.key !== "Enter") return;
+				const wert = schluesselInput.value.trim();
+				if (!wert) return;
+				schluessel = wert;
+				localStorage.setItem(LK, schluessel);
+				schluesselEl.hidden = true;
+				const z = await serverLaden();
+				if (!uebernehmen(z) && schluessel) serverSichern();
+			});
+			if (!schluessel) schluesselFragen();
+			else
+				serverLaden().then((z) => {
+					if (!uebernehmen(z) && schluessel) serverSichern();
+				});
+		</script>
+	</body>
+</html>
