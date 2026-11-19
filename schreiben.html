@@ -26,6 +26,7 @@
 			:root {
 				--paper: #fcfcfc;
 				--black: #141414;
+				--blue: #2440c9;
 				--pad: clamp(1.25rem, 3vw, 2.5rem);
 				--ml: clamp(1.25rem, 3vw, 2.5rem);
 				--mr: min(94vw, 46rem);
@@ -55,15 +56,46 @@
 				left: 0;
 				right: 0;
 				z-index: 10;
-				background: var(--paper);
+				background: var(--blue);
+				color: var(--paper);
 			}
 			.bar {
 				display: flex;
 				align-items: baseline;
 				gap: 1.5rem;
-				padding: var(--pad) var(--pad) 0.9rem;
 			}
-			.docs {
+			.projzeile {
+				padding: var(--pad) var(--pad) 0;
+			}
+			.projzeile button {
+				font-size: 0.85rem;
+				color: rgba(252, 252, 252, 0.6);
+			}
+			.proj.active .open {
+				color: var(--paper);
+				font-style: italic;
+			}
+			.textzeile {
+				padding: 0.85rem var(--pad) 0.9rem;
+			}
+			/* Ziehen: Gezogenes schwebt, ein feiner Strich markiert den
+			   Einfügeplatz, ein Projekt unterm Zeiger wird kräftiger */
+			.schwebt {
+				opacity: 0.35;
+			}
+			.mark {
+				border-left: 1px solid rgba(252, 252, 252, 0.7);
+				margin-left: -1px;
+			}
+			.mark-ende {
+				border-right: 1px solid rgba(252, 252, 252, 0.7);
+				margin-right: -1px;
+			}
+			.ziel .open {
+				-webkit-text-stroke-width: 0.45px;
+			}
+			.docs,
+			.projs {
 				display: flex;
 				align-items: baseline;
 				gap: 1.4rem;
@@ -71,10 +103,12 @@
 				overflow-x: auto;
 				scrollbar-width: none;
 			}
-			.docs::-webkit-scrollbar {
+			.docs::-webkit-scrollbar,
+			.projs::-webkit-scrollbar {
 				display: none;
 			}
-			.doc {
+			.doc,
+			.proj {
 				display: inline-flex;
 				align-items: baseline;
 				gap: 0.35rem;
@@ -88,7 +122,7 @@
 				font-size: 1rem;
 				padding: 0;
 				cursor: pointer;
-				-webkit-text-stroke: 0 var(--black);
+				-webkit-text-stroke: 0 currentColor;
 				transition: -webkit-text-stroke-width 0.25s ease, opacity 0.25s ease;
 			}
 			.bar button:hover {
@@ -97,15 +131,19 @@
 			.doc.active .open {
 				font-style: italic;
 			}
-			.doc .del {
+			.doc .del,
+			.proj .del {
 				opacity: 0;
 				font-size: 0.85rem;
 			}
 			.doc:hover .del,
-			.doc .del:focus-visible {
+			.proj:hover .del,
+			.doc .del:focus-visible,
+			.proj .del:focus-visible {
 				opacity: 0.4;
 			}
-			.doc .del:hover {
+			.doc .del:hover,
+			.proj .del:hover {
 				opacity: 1;
 			}
 			.new {
@@ -127,14 +165,14 @@
 				top: 50%;
 				height: 1px;
 				translate: 0 -50%;
-				background: rgba(20, 20, 20, 0.08);
+				background: rgba(252, 252, 252, 0.25);
 			}
 			.ruler .span {
 				position: absolute;
 				top: 50%;
 				translate: 0 -50%;
 				height: 1px;
-				background: rgba(20, 20, 20, 0.55);
+				background: rgba(252, 252, 252, 0.85);
 				left: var(--ml);
 				width: calc(var(--mr) - var(--ml));
 			}
@@ -146,7 +184,7 @@
 				translate: 0 -50%;
 				width: 1px;
 				height: 7px;
-				background: rgba(20, 20, 20, 0.55);
+				background: rgba(252, 252, 252, 0.85);
 			}
 			.ruler .span::before {
 				left: 0;
@@ -195,7 +233,11 @@
 	</head>
 	<body>
 		<header class="top">
-			<div class="bar">
+			<div class="bar projzeile">
+				<nav class="projs" aria-label="Projekte"></nav>
+				<button class="neuproj" aria-label="Neues Projekt" type="button">+</button>
+			</div>
+			<div class="bar textzeile">
 				<nav class="docs" aria-label="Texte"></nav>
 				<button class="new" aria-label="Neuer Text" type="button">+</button>
 			</div>
@@ -218,6 +260,8 @@
 			const LA = "schreib-aktiv";
 			const LW = "schreib-breite";
 			const LT = "schreib-papierkorb";
+			const LP = "schreib-projekte";
+			const LF = "schreib-projekt";
 
 			let docs = [];
 			try {
@@ -229,7 +273,16 @@
 			let active = localStorage.getItem(LA);
 			if (!docs.some((d) => d.id === active)) active = docs[0].id;
 
+			let projekte = [];
+			try {
+				projekte = JSON.parse(localStorage.getItem(LP) || "[]");
+			} catch {}
+			if (!Array.isArray(projekte)) projekte = [];
+			let filter = localStorage.getItem(LF) || "";
+			if (filter && !projekte.some((p) => p.id === filter)) filter = "";
+
 			const barEl = document.querySelector(".docs");
+			const projsEl = document.querySelector(".projs");
 			const titleEl = document.querySelector(".title");
 			const bodyEl = document.querySelector(".body");
 
@@ -257,6 +310,8 @@
 			const persist = () => {
 				localStorage.setItem(LS, JSON.stringify(docs));
 				localStorage.setItem(LA, active);
+				localStorage.setItem(LP, JSON.stringify(projekte));
+				localStorage.setItem(LF, filter);
 			};
 			const queueSave = () => {
 				clearTimeout(saveTimer);
@@ -264,16 +319,211 @@
 			};
 			addEventListener("beforeunload", persist);
 
+			const sichtbar = () => docs.filter((d) => !filter || d.p === filter);
+
+			// Ziehen in der Leiste: ab 6px wird sortiert statt geklickt;
+			// Texte lassen sich außerdem auf ein Projekt ziehen
+			const zieh = (btn, wrap, zeile, aufProjekt, beiKlick, beiDrop) => {
+				btn.addEventListener("click", (e) => {
+					if (e.detail === 0) beiKlick(); // Tastatur
+				});
+				btn.addEventListener("pointerdown", (e) => {
+					if (e.button !== 0 || btn.isContentEditable) return;
+					const x0 = e.clientX;
+					let aktiv = false;
+					let platz = -1;
+					let ziel = null;
+					const aufraeumen = () => {
+						wrap.classList.remove("schwebt");
+						for (const el of zeile.children) el.classList.remove("mark", "mark-ende");
+						if (ziel) ziel.classList.remove("ziel");
+					};
+					const move = (ev) => {
+						if (!aktiv && Math.abs(ev.clientX - x0) < 6) return;
+						aktiv = true;
+						wrap.classList.add("schwebt");
+						for (const el of zeile.children) el.classList.remove("mark", "mark-ende");
+						if (ziel) ziel.classList.remove("ziel");
+						ziel = null;
+						if (aufProjekt) {
+							const unter = document.elementFromPoint(ev.clientX, ev.clientY);
+							const p = unter && unter.closest(".proj");
+							if (p) {
+								ziel = p;
+								p.classList.add("ziel");
+								return;
+							}
+						}
+						const kinder = [...zeile.children];
+						platz = kinder.length;
+						for (let k = 0; k < kinder.length; k++) {
+							const r = kinder[k].getBoundingClientRect();
+							if (ev.clientX < r.left + r.width / 2) {
+								platz = k;
+								break;
+							}
+						}
+						if (platz < kinder.length) kinder[platz].classList.add("mark");
+						else if (kinder.length) kinder[kinder.length - 1].classList.add("mark-ende");
+					};
+					const up = () => {
+						btn.removeEventListener("pointermove", move);
+						const z = ziel;
+						const pl = platz;
+						const war = aktiv;
+						aufraeumen();
+						if (!war) beiKlick();
+						else beiDrop(pl, z);
+					};
+					btn.setPointerCapture(e.pointerId);
+					btn.addEventListener("pointermove", move);
+					btn.addEventListener("pointerup", up, { once: true });
+					btn.addEventListener(
+						"pointercancel",
+						() => {
+							btn.removeEventListener("pointermove", move);
+							aufraeumen();
+						},
+						{ once: true }
+					);
+				});
+			};
+
+			// platz ist der Einfügeindex in der sichtbaren Zeile
+			const umsortieren = (liste, element, zeile, platz) => {
+				const ref = platz < zeile.length ? zeile[platz] : null;
+				if (ref === element) return;
+				liste.splice(liste.indexOf(element), 1);
+				let i;
+				if (ref) i = liste.indexOf(ref);
+				else {
+					const letzt = zeile.filter((x) => x !== element).pop();
+					i = letzt ? liste.indexOf(letzt) + 1 : liste.length;
+				}
+				if (i < 0) i = 0;
+				liste.splice(i, 0, element);
+			};
+
+			// stellt sicher, dass der aktive Text in der Auswahl sichtbar
+			// ist; eine leere Auswahl bekommt einen frischen Text
+			const sichtNachziehen = () => {
+				const vis = sichtbar();
+				if (!vis.some((d) => d.id === active)) {
+					if (!vis.length) {
+						const d = { id: Date.now().toString(36), title: "", body: "" };
+						if (filter) d.p = filter;
+						docs.push(d);
+						vis.push(d);
+					}
+					active = vis[0].id;
+					persist();
+					renderBar();
+					load();
+				}
+			};
+
+			const projektWechsel = (id) => {
+				filter = id;
+				persist();
+				renderBar();
+				sichtNachziehen();
+			};
+
+			const projektWeg = (id) => {
+				projekte = projekte.filter((p) => p.id !== id);
+				for (const d of docs) if (d.p === id) delete d.p;
+				if (filter === id) filter = "";
+				persist();
+				renderBar();
+				sichtNachziehen();
+			};
+
+			// Umbenennen speichert bei jeder Eingabe mit, weil blur im
+			// Hintergrund-Tab nicht zuverlässig kommt
+			const umbenennen = (open, p) => {
+				open.contentEditable = "plaintext-only";
+				open.focus();
+				try {
+					getSelection().selectAllChildren(open);
+				} catch {}
+				const tippt = () => {
+					p.name = open.textContent.replace(/\n/g, " ").trim() || "Projekt";
+					queueSave();
+				};
+				open.addEventListener("input", tippt);
+				let zu = false;
+				const draussen = (e) => {
+					if (!open.contains(e.target)) fertig();
+				};
+				const fertig = () => {
+					if (zu) return;
+					zu = true;
+					document.removeEventListener("pointerdown", draussen);
+					open.removeEventListener("input", tippt);
+					open.contentEditable = "false";
+					tippt();
+					persist();
+					renderBar();
+				};
+				setTimeout(() => document.addEventListener("pointerdown", draussen), 0);
+				open.addEventListener("blur", fertig, { once: true });
+				open.addEventListener("keydown", (e) => {
+					if (e.key === "Enter") {
+						e.preventDefault();
+						fertig();
+					}
+				});
+			};
+
 			const renderBar = () => {
+				projsEl.innerHTML = "";
+				const alle = [{ id: "", name: "Alle" }, ...projekte];
+				for (const p of alle) {
+					const wrap = document.createElement("span");
+					wrap.className = "proj" + (p.id === filter ? " active" : "");
+					wrap.dataset.id = p.id;
+					const open = document.createElement("button");
+					open.type = "button";
+					open.className = "open";
+					open.textContent = p.name;
+					wrap.append(open);
+					if (p.id) {
+						open.addEventListener("dblclick", () => umbenennen(open, p));
+						const del = document.createElement("button");
+						del.type = "button";
+						del.className = "del";
+						del.textContent = "×";
+						del.setAttribute("aria-label", p.name + " auflösen");
+						del.addEventListener("click", () => projektWeg(p.id));
+						wrap.append(del);
+						zieh(open, wrap, projsEl, false, () => projektWechsel(p.id), (platz) => {
+							const ref = platz < alle.length ? alle[platz] : null;
+							if (ref === p) return;
+							projekte.splice(projekte.indexOf(p), 1);
+							let i;
+							if (!ref) i = projekte.length;
+							else if (!ref.id) i = 0;
+							else i = projekte.indexOf(ref);
+							if (i < 0) i = 0;
+							projekte.splice(i, 0, p);
+							persist();
+							renderBar();
+						});
+					} else {
+						zieh(open, wrap, projsEl, false, () => projektWechsel(""), () => {});
+					}
+					projsEl.append(wrap);
+				}
+
 				barEl.innerHTML = "";
-				for (const d of docs) {
+				const vis = sichtbar();
+				for (const d of vis) {
 					const wrap = document.createElement("span");
 					wrap.className = "doc" + (d.id === active ? " active" : "");
 					const open = document.createElement("button");
 					open.type = "button";
 					open.className = "open";
 					open.textContent = labelFor(d);
-					open.addEventListener("click", () => switchTo(d.id));
 					const del = document.createElement("button");
 					del.type = "button";
 					del.className = "del";
@@ -281,6 +531,17 @@
 					del.setAttribute("aria-label", labelFor(d) + " löschen");
 					del.addEventListener("click", () => removeDoc(d.id));
 					wrap.append(open, del);
+					zieh(open, wrap, barEl, true, () => switchTo(d.id), (platz, ziel) => {
+						if (ziel) {
+							if (ziel.dataset.id) d.p = ziel.dataset.id;
+							else delete d.p;
+						} else {
+							umsortieren(docs, d, vis, platz);
+						}
+						persist();
+						renderBar();
+						sichtNachziehen();
+					});
 					barEl.append(wrap);
 				}
 			};
@@ -311,22 +572,33 @@
 				trash.push(gone);
 				localStorage.setItem(LT, JSON.stringify(trash));
 				docs = docs.filter((d) => d.id !== id);
-				if (!docs.length) docs = [{ id: Date.now().toString(36), title: "", body: "" }];
-				if (active === id) active = docs[0].id;
+				if (active === id) active = "";
 				persist();
 				renderBar();
-				load();
+				sichtNachziehen();
 			};
 
 			document.querySelector(".new").addEventListener("click", () => {
 				persist();
 				const d = { id: Date.now().toString(36), title: "", body: "" };
+				if (filter) d.p = filter;
 				docs.push(d);
 				active = d.id;
 				persist();
 				renderBar();
 				load();
 				titleEl.focus();
+			});
+
+			document.querySelector(".neuproj").addEventListener("click", () => {
+				const p = { id: Date.now().toString(36), name: "Projekt" };
+				projekte.push(p);
+				filter = p.id;
+				persist();
+				renderBar();
+				sichtNachziehen();
+				const el = projsEl.querySelector('.proj[data-id="' + p.id + '"] .open');
+				if (el) umbenennen(el, p);
 			});
 
 			titleEl.addEventListener("input", () => {
