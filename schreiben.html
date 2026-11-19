@@ -292,10 +292,10 @@
 				projekte = JSON.parse(localStorage.getItem(LP) || "[]");
 			} catch {}
 			if (!Array.isArray(projekte)) projekte = [];
-			// Automatisches Schreiben ist ein normales Projekt und wird
-			// angelegt, sobald es keine Projekte gibt
-			if (!projekte.length) {
-				projekte = [{ id: Date.now().toString(36), name: "Automatisches Schreiben", auto: true }];
+			// das Projekt fürs Automatische Schreiben gibt es immer; neue
+			// Texte darin heißen automatisch nach dem Tag
+			if (!projekte.some((p) => p.auto)) {
+				projekte.unshift({ id: Date.now().toString(36), name: "Automatisches Schreiben", auto: true });
 			}
 			let filter = localStorage.getItem(LF) || "";
 			if (!projekte.some((p) => p.id === filter)) filter = projekte[0].id;
@@ -540,8 +540,8 @@
 			const projektWeg = (id) => {
 				merken();
 				projekte = projekte.filter((p) => p.id !== id);
-				if (!projekte.length) {
-					projekte = [{ id: Date.now().toString(36), name: "Automatisches Schreiben", auto: true }];
+				if (!projekte.some((p) => p.auto)) {
+					projekte.unshift({ id: Date.now().toString(36), name: "Automatisches Schreiben", auto: true });
 				}
 				if (filter === id) filter = projekte[0].id;
 				for (const d of docs) {
