@@ -13,8 +13,7 @@
 	"kv_namespaces": [
 		{
 			"binding": "SCHREIBEN",
-			"id": "552ec381ebbe40c8a5249d184426bba3",
-			"remote": true
+			"id": "552ec381ebbe40c8a5249d184426bba3"
 		}
 	],
 	// Pflicht für Vorschau-Builds von Branches außer main (npx wrangler preview)

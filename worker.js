@@ -7,7 +7,10 @@ export default {
 			const key = request.headers.get("x-schreib-key") || "";
 			// Secret am Worker oder Eintrag "schluessel" im Speicher —
 			// Preview-Versionen erben Secrets nicht zuverlässig
-			const soll = await env.SCHREIBEN.get("schluessel");
+			let soll = null;
+			try {
+				soll = await env.SCHREIBEN.get("schluessel");
+			} catch {}
 			const ok = key && (key === env.SCHREIB_KEY || (soll && key === soll));
 			if (!ok) {
 				return new Response("kein Zutritt", { status: 401 });
