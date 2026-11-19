@@ -462,6 +462,8 @@ body.listening .track.current {
 	font-size: clamp(1.25rem, 2.3vw, 2rem);
 	line-height: 1.3;
 	letter-spacing: -0.03em;
+	font-variant-numeric: lining-nums;
+	font-feature-settings: "lnum" 1, "onum" 0;
 }
 .reading article {
 	/* Spalte endet an der Bildschirmmitte, bleibt auf kleinen
@@ -518,6 +520,8 @@ body.listening .track.current {
 	writing-mode: vertical-rl;
 	font-family: "ABC Otto", Georgia, serif;
 	font-weight: 300;
+	font-variant-numeric: lining-nums;
+	font-feature-settings: "lnum" 1, "onum" 0;
 	font-size: 1.35rem;
 	letter-spacing: 0;
 	white-space: nowrap;
@@ -872,6 +876,8 @@ body.cinema .cinema-bar {
 .project .intro {
 	font-family: "ABC Otto", Georgia, serif;
 	font-weight: 300;
+	font-variant-numeric: lining-nums;
+	font-feature-settings: "lnum" 1, "onum" 0;
 	font-size: clamp(1.1rem, 1.7vw, 1.4rem);
 	line-height: 1.4;
 	letter-spacing: -0.02em;
