@@ -56,6 +56,18 @@
 				right: 0;
 				z-index: 10;
 			}
+			/* Die Leiste zeigt sich erst beim Annähern; sonst schaut nur
+			   das Lineal mit etwas Abstand zur Oberkante heraus */
+			@media (hover: hover) {
+				.top {
+					transform: translateY(calc(-100% + 40px));
+					transition: transform 0.45s cubic-bezier(0.33, 1, 0.36, 1);
+				}
+				.top:hover,
+				.top:focus-within {
+					transform: none;
+				}
+			}
 			/* Die Fläche endet exakt am Strich des Lineals (Linienmitte
 			   liegt 13px über der Unterkante des Kopfes) */
 			.top::before {
