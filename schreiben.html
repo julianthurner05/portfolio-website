@@ -77,11 +77,18 @@
 				font-size: 0.85rem;
 				color: rgba(20, 20, 20, 0.55);
 			}
-			.proj.active .open {
+			.proj.active .open,
+			.papierkorb.active {
 				color: var(--black);
 				text-decoration: underline;
 				text-underline-offset: 0.22em;
 				text-decoration-thickness: 1.5px;
+			}
+			.papierkorb {
+				margin-left: auto;
+			}
+			body.im-papierkorb .new {
+				visibility: hidden;
 			}
 			.textzeile {
 				padding: 0.85rem var(--pad) 0.9rem;
@@ -244,6 +251,7 @@
 			<div class="bar projzeile">
 				<nav class="projs" aria-label="Projekte"></nav>
 				<button class="neuproj" aria-label="Neues Projekt" type="button">+</button>
+				<button class="papierkorb" type="button">Papierkorb</button>
 			</div>
 			<div class="bar textzeile">
 				<nav class="docs" aria-label="Texte"></nav>
@@ -313,8 +321,18 @@
 
 			const barEl = document.querySelector(".docs");
 			const projsEl = document.querySelector(".projs");
+			const pkBtn = document.querySelector(".papierkorb");
 			const titleEl = document.querySelector(".title");
 			const bodyEl = document.querySelector(".body");
+			let imPapierkorb = false;
+			let trashOffen = null;
+			const papierkorbListe = () => {
+				try {
+					return (JSON.parse(localStorage.getItem(LT) || "[]") || []).filter(Boolean);
+				} catch {
+					return [];
+				}
+			};
 
 			const cur = () => docs.find((d) => d.id === active);
 			const labelFor = (d) => d.title.trim() || "Ohne Titel";
@@ -337,17 +355,38 @@
 			};
 
 			let saveTimer = 0;
+			let ungesichert = false;
 			const persist = () => {
+				ungesichert = false;
 				localStorage.setItem(LS, JSON.stringify(docs));
 				localStorage.setItem(LA, active);
 				localStorage.setItem(LP, JSON.stringify(projekte));
 				localStorage.setItem(LF, filter);
 			};
 			const queueSave = () => {
+				ungesichert = true;
 				clearTimeout(saveTimer);
 				saveTimer = setTimeout(persist, 300);
 			};
-			addEventListener("beforeunload", persist);
+			// nur schreiben, wenn dieser Tab wirklich etwas geändert hat —
+			// sonst überschreibt ein alter Tab beim Schließen neuere Stände
+			addEventListener("beforeunload", () => {
+				if (ungesichert) persist();
+			});
+			// Änderungen aus anderen Tabs übernehmen, solange hier nicht
+			// gerade geschrieben wird
+			addEventListener("storage", (e) => {
+				if (e.key !== LS && e.key !== LP) return;
+				if (document.hasFocus()) return;
+				try {
+					docs = JSON.parse(localStorage.getItem(LS) || "[]") || [];
+					projekte = JSON.parse(localStorage.getItem(LP) || "[]") || [];
+					filter = localStorage.getItem(LF) || filter;
+					active = localStorage.getItem(LA) || active;
+					renderBar();
+					load();
+				} catch {}
+			});
 
 			const sichtbar = () => docs.filter((d) => (d.p || []).includes(filter));
 
@@ -530,10 +569,15 @@
 			// baut nur die Textzeile neu, damit die Projektknoten stehen
 			// bleiben und ein Doppelklick dort ankommt
 			const projektWechsel = (id) => {
+				imPapierkorb = false;
+				trashOffen = null;
+				document.body.classList.remove("im-papierkorb");
+				pkBtn.classList.remove("active");
 				filter = id;
 				persist();
 				for (const el of projsEl.children) el.classList.toggle("active", el.dataset.id === id);
 				renderDocs();
+				load();
 				sichtNachziehen();
 			};
 
@@ -622,6 +666,40 @@
 
 			const renderDocs = () => {
 				barEl.innerHTML = "";
+				if (imPapierkorb) {
+					// Papierkorb: Texte nur lesbar; Ziehen auf ein Projekt
+					// stellt wieder her
+					for (const d of papierkorbListe()) {
+						const wrap = document.createElement("span");
+						wrap.className = "doc" + (d.id === trashOffen ? " active" : "");
+						const open = document.createElement("button");
+						open.type = "button";
+						open.className = "open";
+						open.textContent = labelFor(d);
+						wrap.append(open);
+						zieh(open, wrap, barEl, true, () => {
+							trashOffen = d.id;
+							titleEl.contentEditable = "false";
+							bodyEl.contentEditable = "false";
+							titleEl.textContent = d.title;
+							bodyEl.textContent = d.body;
+							document.title = labelFor(d) + " – Papierkorb";
+							renderDocs();
+						}, (platz, ziel) => {
+							if (!ziel) return;
+							merken();
+							const rest = papierkorbListe().filter((x) => x.id !== d.id);
+							localStorage.setItem(LT, JSON.stringify(rest));
+							d.p = [ziel.dataset.id];
+							docs.push(d);
+							active = d.id;
+							persist();
+							projektWechsel(ziel.dataset.id);
+						});
+						barEl.append(wrap);
+					}
+					return;
+				}
 				const vis = sichtbar();
 				for (const d of vis) {
 					const wrap = document.createElement("span");
@@ -662,6 +740,9 @@
 
 			const load = () => {
 				const d = cur();
+				if (!d) return;
+				titleEl.contentEditable = "plaintext-only";
+				bodyEl.contentEditable = "plaintext-only";
 				titleEl.textContent = d.title;
 				bodyEl.textContent = d.body;
 				document.title = labelFor(d) + " – Schreiben";
@@ -709,6 +790,20 @@
 				renderDocs();
 				load();
 				(pr && pr.auto ? bodyEl : titleEl).focus();
+			});
+
+			pkBtn.addEventListener("click", () => {
+				imPapierkorb = true;
+				trashOffen = null;
+				document.body.classList.add("im-papierkorb");
+				pkBtn.classList.add("active");
+				for (const el of projsEl.children) el.classList.remove("active");
+				renderDocs();
+				titleEl.contentEditable = "false";
+				bodyEl.contentEditable = "false";
+				titleEl.textContent = "";
+				bodyEl.textContent = "";
+				document.title = "Papierkorb – Schreiben";
 			});
 
 			document.querySelector(".neuproj").addEventListener("click", () => {
