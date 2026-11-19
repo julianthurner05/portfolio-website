@@ -256,6 +256,10 @@
 			.body {
 				min-height: 40svh;
 			}
+			/* solange der Text auf die Seite passt, wird nicht gescrollt */
+			body.passt {
+				overflow: hidden;
+			}
 			.body:empty::before {
 				content: "…";
 				opacity: 0.25;
@@ -811,6 +815,19 @@
 				renderDocs();
 			};
 
+			// Scrollen gibt es erst, wenn der Text übers Blatt hinausläuft;
+			// die Verschiebung der versteckten Leiste wird herausgerechnet
+			const mainEl = document.querySelector("main");
+			const scrollAnpassen = () => {
+				const t = getComputedStyle(mainEl).transform;
+				const f = t && t !== "none" ? new DOMMatrix(t).f : 0;
+				const unten = bodyEl.getBoundingClientRect().bottom + scrollY - f;
+				const passt = unten <= innerHeight;
+				if (passt && !document.body.classList.contains("passt")) scrollTo(0, 0);
+				document.body.classList.toggle("passt", passt);
+			};
+			addEventListener("resize", scrollAnpassen);
+
 			const load = () => {
 				const d = cur();
 				if (!d) return;
@@ -820,6 +837,7 @@
 				bodyEl.textContent = d.body;
 				document.title = labelFor(d) + " – Schreiben";
 				scrollTo(0, 0);
+				scrollAnpassen();
 			};
 
 			const switchTo = (id) => {
@@ -901,6 +919,7 @@
 			bodyEl.addEventListener("input", () => {
 				cur().body = textOf(bodyEl);
 				queueSave();
+				scrollAnpassen();
 			});
 			titleEl.addEventListener("keydown", (e) => {
 				if (e.key === "Enter") {
@@ -945,6 +964,7 @@
 				document.documentElement.style.setProperty("--ml", ml + "px");
 				document.documentElement.style.setProperty("--mr", mr + "px");
 				localStorage.setItem(LW, JSON.stringify({ l: ml, r: mr }));
+				if (typeof scrollAnpassen === "function") scrollAnpassen();
 			};
 			applyM();
 			addEventListener("resize", applyM);
