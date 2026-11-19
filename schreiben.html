@@ -8,8 +8,7 @@
 		<link rel="icon" href="favicon.svg" type="image/svg+xml" />
 		<link rel="icon" href="favicon.png" type="image/png" sizes="96x96" />
 		<link rel="preload" href="fonts/ABCOtto-Light-Trial.otf" as="font" type="font/otf" crossorigin />
-		<link rel="preload" href="fonts/NeueMontreal-Regular.otf" as="font" type="font/otf" crossorigin />
-		<link rel="preload" href="fonts/NeueMontreal-Bold.otf" as="font" type="font/otf" crossorigin />
+		<link rel="preload" href="fonts/ABCOtto-LightItalic-Trial.otf" as="font" type="font/otf" crossorigin />
 		<style>
 			@font-face {
 				font-family: "ABC Otto";
@@ -18,22 +17,18 @@
 				font-display: block;
 			}
 			@font-face {
-				font-family: "Neue Montreal";
-				src: url("fonts/NeueMontreal-Regular.otf") format("opentype");
-				font-weight: 400;
-				font-display: block;
-			}
-			@font-face {
-				font-family: "Neue Montreal";
-				src: url("fonts/NeueMontreal-Bold.otf") format("opentype");
-				font-weight: 700;
+				font-family: "ABC Otto";
+				src: url("fonts/ABCOtto-LightItalic-Trial.otf") format("opentype");
+				font-weight: 300;
+				font-style: italic;
 				font-display: block;
 			}
 			:root {
 				--paper: #fcfcfc;
 				--black: #141414;
 				--pad: clamp(1.25rem, 3vw, 2.5rem);
-				--colw: 42rem;
+				--ml: clamp(1.25rem, 3vw, 2.5rem);
+				--mr: min(94vw, 46rem);
 			}
 			* {
 				box-sizing: border-box;
@@ -45,23 +40,28 @@
 			body {
 				background: var(--paper);
 				color: var(--black);
-				font-family: "Neue Montreal", system-ui, sans-serif;
+				font-family: "ABC Otto", Georgia, "Times New Roman", serif;
+				font-weight: 300;
+				font-variant-numeric: lining-nums;
+				font-feature-settings: "lnum" 1, "onum" 0;
 				-webkit-font-smoothing: antialiased;
 				-moz-osx-font-smoothing: grayscale;
 			}
 
-			/* Leiste mit den Texten, wie die Menüleiste der Seite */
-			.bar {
+			/* Kopf: Textleiste, darunter das Lineal, das die Ränder setzt */
+			.top {
 				position: fixed;
 				top: 0;
 				left: 0;
 				right: 0;
 				z-index: 10;
+				background: linear-gradient(var(--paper) 70%, transparent);
+			}
+			.bar {
 				display: flex;
 				align-items: baseline;
 				gap: 1.5rem;
-				padding: var(--pad);
-				background: linear-gradient(var(--paper) 55%, transparent);
+				padding: var(--pad) var(--pad) 0.9rem;
 			}
 			.docs {
 				display: flex;
@@ -85,17 +85,17 @@
 				background: none;
 				color: inherit;
 				font: inherit;
-				font-size: 0.95rem;
+				font-size: 1rem;
 				padding: 0;
 				cursor: pointer;
 				-webkit-text-stroke: 0 var(--black);
 				transition: -webkit-text-stroke-width 0.25s ease, opacity 0.25s ease;
 			}
 			.bar button:hover {
-				-webkit-text-stroke-width: 0.55px;
+				-webkit-text-stroke-width: 0.45px;
 			}
 			.doc.active .open {
-				font-weight: 700;
+				font-style: italic;
 			}
 			.doc .del {
 				opacity: 0;
@@ -111,38 +111,57 @@
 			.new {
 				font-size: 1.05rem;
 			}
-			.width {
-				margin-left: auto;
-				appearance: none;
-				-webkit-appearance: none;
-				align-self: center;
-				width: clamp(4rem, 8vw, 7rem);
+
+			/* Das Lineal: volle Breite, die schwarze Strecke ist der
+			   Schreibbereich; Enden ziehen die Ränder, die Mitte das Ganze */
+			.ruler {
+				position: relative;
+				height: 26px;
+				touch-action: none;
+			}
+			.ruler::before {
+				content: "";
+				position: absolute;
+				left: 0;
+				right: 0;
+				top: 50%;
+				height: 1.5px;
+				translate: 0 -50%;
+				background: rgba(20, 20, 20, 0.15);
+			}
+			.ruler .span {
+				position: absolute;
+				top: 50%;
+				translate: 0 -50%;
 				height: 1.5px;
 				background: var(--black);
-				cursor: pointer;
+				left: var(--ml);
+				width: calc(var(--mr) - var(--ml));
 			}
-			.width::-webkit-slider-thumb {
-				-webkit-appearance: none;
-				width: 10px;
-				height: 10px;
-				border-radius: 50%;
+			.ruler .span::before,
+			.ruler .span::after {
+				content: "";
+				position: absolute;
+				top: 50%;
+				translate: 0 -50%;
+				width: 1.5px;
+				height: 11px;
 				background: var(--black);
 			}
-			.width::-moz-range-thumb {
-				width: 10px;
-				height: 10px;
-				border-radius: 50%;
-				background: var(--black);
-				border: 0;
+			.ruler .span::before {
+				left: 0;
+			}
+			.ruler .span::after {
+				right: 0;
 			}
 
-			/* Das Blatt: Otto wie auf den Textseiten */
+			/* Das Blatt: Otto wie auf den Textseiten, bündig am linken Rand */
 			main {
-				padding: calc(var(--pad) + 3.4rem) var(--pad) 50svh;
+				padding: calc(var(--pad) + 4.6rem) 0 50svh;
 			}
 			.sheet {
-				max-width: min(100%, var(--colw));
-				margin: 0 auto;
+				margin-left: var(--ml);
+				width: calc(var(--mr) - var(--ml));
 				font-family: "ABC Otto", Georgia, "Times New Roman", serif;
 				font-weight: 300;
 				font-size: clamp(1.25rem, 2.3vw, 2rem);
@@ -175,10 +194,14 @@
 		</style>
 	</head>
 	<body>
-		<header class="bar">
-			<nav class="docs" aria-label="Texte"></nav>
-			<button class="new" aria-label="Neuer Text" type="button">+</button>
-			<input class="width" type="range" min="20" max="70" step="1" aria-label="Absatzbreite" />
+		<header class="top">
+			<div class="bar">
+				<nav class="docs" aria-label="Texte"></nav>
+				<button class="new" aria-label="Neuer Text" type="button">+</button>
+			</div>
+			<div class="ruler" aria-label="Ränder des Schreibbereichs">
+				<div class="span"></div>
+			</div>
 		</header>
 
 		<main>
@@ -209,7 +232,6 @@
 			const barEl = document.querySelector(".docs");
 			const titleEl = document.querySelector(".title");
 			const bodyEl = document.querySelector(".body");
-			const widthEl = document.querySelector(".width");
 
 			const cur = () => docs.find((d) => d.id === active);
 			const labelFor = (d) => d.title.trim() || "Ohne Titel";
@@ -338,16 +360,66 @@
 				}
 			});
 
-			// Absatzbreite
-			const setWidth = (v) => {
-				document.documentElement.style.setProperty("--colw", v + "rem");
+			// Lineal: Enden ziehen die Ränder, die Mitte verschiebt den
+			// Bereich als Ganzes; alles in Pixeln, gemerkt in localStorage
+			const ruler = document.querySelector(".ruler");
+			const MIN = 160;
+			const padPx = () => parseFloat(getComputedStyle(document.querySelector(".bar")).paddingLeft) || 40;
+			let ml, mr;
+			try {
+				({ l: ml, r: mr } = JSON.parse(localStorage.getItem(LW)));
+			} catch {}
+			if (!(ml >= 0) || !(mr > ml)) {
+				ml = padPx();
+				mr = ml + 672;
+			}
+			const clampM = () => {
+				ml = Math.max(0, Math.min(ml, innerWidth - MIN));
+				mr = Math.max(ml + MIN, Math.min(mr, innerWidth));
 			};
-			widthEl.value = localStorage.getItem(LW) || 42;
-			setWidth(widthEl.value);
-			widthEl.addEventListener("input", () => {
-				setWidth(widthEl.value);
-				localStorage.setItem(LW, widthEl.value);
+			const applyM = () => {
+				clampM();
+				document.documentElement.style.setProperty("--ml", ml + "px");
+				document.documentElement.style.setProperty("--mr", mr + "px");
+				localStorage.setItem(LW, JSON.stringify({ l: ml, r: mr }));
+			};
+			applyM();
+			addEventListener("resize", applyM);
+
+			const GRIFF = 18;
+			const zone = (x) =>
+				Math.abs(x - ml) <= GRIFF ? "l" : Math.abs(x - mr) <= GRIFF ? "r" : x > ml && x < mr ? "m" : null;
+			ruler.addEventListener("pointermove", (e) => {
+				if (ziehen) return;
+				const z = zone(e.clientX);
+				ruler.style.cursor = z === "m" ? "grab" : z ? "ew-resize" : "";
 			});
+			let ziehen = null;
+			ruler.addEventListener("pointerdown", (e) => {
+				const z = zone(e.clientX);
+				if (!z) return;
+				ziehen = { z, x: e.clientX, l: ml, r: mr };
+				ruler.setPointerCapture(e.pointerId);
+				if (z === "m") ruler.style.cursor = "grabbing";
+			});
+			ruler.addEventListener("pointermove", (e) => {
+				if (!ziehen) return;
+				const dx = e.clientX - ziehen.x;
+				if (ziehen.z === "l") ml = Math.min(ziehen.l + dx, mr - MIN);
+				else if (ziehen.z === "r") mr = Math.max(ziehen.r + dx, ml + MIN);
+				else {
+					const b = ziehen.r - ziehen.l;
+					ml = Math.max(0, Math.min(ziehen.l + dx, innerWidth - b));
+					mr = ml + b;
+				}
+				applyM();
+			});
+			const zuEnde = () => {
+				ziehen = null;
+				ruler.style.cursor = "";
+			};
+			ruler.addEventListener("pointerup", zuEnde);
+			ruler.addEventListener("pointercancel", zuEnde);
 
 			renderBar();
 			load();
