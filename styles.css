@@ -473,7 +473,7 @@ body.listening .track.current {
 	font-size: inherit;
 	font-weight: 400;
 	line-height: inherit;
-	letter-spacing: 0;
+	letter-spacing: inherit;
 	margin: 0 0 1.45em;
 }
 .reading p {
