@@ -122,19 +122,19 @@
 			.ruler::before {
 				content: "";
 				position: absolute;
-				left: 0;
-				right: 0;
+				left: var(--pad);
+				right: var(--pad);
 				top: 50%;
-				height: 1.5px;
+				height: 1px;
 				translate: 0 -50%;
-				background: rgba(20, 20, 20, 0.15);
+				background: rgba(20, 20, 20, 0.08);
 			}
 			.ruler .span {
 				position: absolute;
 				top: 50%;
 				translate: 0 -50%;
-				height: 1.5px;
-				background: var(--black);
+				height: 1px;
+				background: rgba(20, 20, 20, 0.55);
 				left: var(--ml);
 				width: calc(var(--mr) - var(--ml));
 			}
@@ -144,9 +144,9 @@
 				position: absolute;
 				top: 50%;
 				translate: 0 -50%;
-				width: 1.5px;
-				height: 11px;
-				background: var(--black);
+				width: 1px;
+				height: 7px;
+				background: rgba(20, 20, 20, 0.55);
 			}
 			.ruler .span::before {
 				left: 0;
@@ -374,8 +374,9 @@
 				mr = ml + 672;
 			}
 			const clampM = () => {
-				ml = Math.max(0, Math.min(ml, innerWidth - MIN));
-				mr = Math.max(ml + MIN, Math.min(mr, innerWidth));
+				const p = padPx();
+				ml = Math.max(p, Math.min(ml, innerWidth - p - MIN));
+				mr = Math.max(ml + MIN, Math.min(mr, innerWidth - p));
 			};
 			const applyM = () => {
 				clampM();
@@ -409,7 +410,8 @@
 				else if (ziehen.z === "r") mr = Math.max(ziehen.r + dx, ml + MIN);
 				else {
 					const b = ziehen.r - ziehen.l;
-					ml = Math.max(0, Math.min(ziehen.l + dx, innerWidth - b));
+					const p = padPx();
+					ml = Math.max(p, Math.min(ziehen.l + dx, innerWidth - p - b));
 					mr = ml + b;
 				}
 				applyM();
