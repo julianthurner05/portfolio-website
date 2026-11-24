@@ -523,8 +523,8 @@ for (const sl of document.querySelectorAll(".slider")) {
 }
 
 // Wisch-Rand per WebGL, angelehnt an Daniel Kramers Cover-Foto zu
-// "Bringing It All Back Home": in einem schmalen Streifen am Bildrand
-// ist das Bild nach außen zunehmend verdreht, wie ein Wirbel, darüber
+// "Bringing It All Back Home": in Vignettenform zum Bildrand hin ist
+// das Bild nach außen zunehmend verdreht, wie ein Wirbel, darüber
 // eine leise Wischspur und ein Hauch Farbsaum; innen bleibt das scharfe
 // Original. Ein gemeinsamer WebGL-Kontext
 // rechnet, jede Figur bekommt eine Leinwand darüber. Läuft nach dem
@@ -572,17 +572,15 @@ for (const sl of document.querySelectorAll(".slider")) {
 		}
 		void main() {
 			vec2 p = v - 0.5;
-			// fast rechteckig abgerundet: 1 an den Kantenmitten, wenig mehr in
-			// den Ecken; so ist der Streifen an allen vier Seiten gleich
-			// anteilig und greift auch in den Ecken kaum tiefer ins Bild
-			vec2 e2 = abs(p) * 2.0;
-			float e = pow(pow(e2.x, 8.0) + pow(e2.y, 8.0), 0.125);
-			float a = max(smoothstep(0.93, 0.955, e), solid);
+			// Vignettenform: Oval im Format der Figur, 1 an den Kantenmitten,
+			// ~1.4 in den Ecken — dieselbe Form wie der Weichzeichner
+			float e = length(p * 2.0);
+			float a = max(smoothstep(0.8, 0.86, e), solid);
 			if (a <= 0.0) {
 				gl_FragColor = vec4(0.0);
 				return;
 			}
-			float k = smoothstep(0.955, 1.07, e);
+			float k = smoothstep(0.86, 1.12, e);
 			float c = ca * k;
 			// in Höhen-Einheiten drehen, damit die Bögen rund bleiben
 			vec2 P = rot(vec2(p.x * aspect, p.y), twist * k);

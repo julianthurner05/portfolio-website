@@ -652,10 +652,24 @@ body.listening .track.current {
 body.cinema .work-frame.cinema-stage video {
 	object-fit: contain;
 }
-/* unten ein ganz leichter Verlauf mit weichgezeichnetem Hintergrund,
-   damit die weiße Titelzeile auf jedem Bild trägt; die Unschärfe läuft
-   nach oben aus, statt an einer Kante zu enden */
+/* Weichzeichner in Vignettenform: die Mitte bleibt klar, zu allen vier
+   Rändern hin wird es zunehmend unscharf, in den Ecken am meisten —
+   ohne abzudunkeln */
 .slider::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	pointer-events: none;
+	-webkit-backdrop-filter: blur(12px);
+	backdrop-filter: blur(12px);
+	-webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, transparent 68%, #000 105%);
+	mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, transparent 68%, #000 105%);
+	transition: opacity 0.8s ease;
+}
+/* nur unten ein leiser Schatten, damit die weiße Titelzeile auch auf
+   hellen Bildern trägt */
+.slider::before {
 	content: "";
 	position: absolute;
 	inset: auto 0 0 0;
@@ -663,12 +677,9 @@ body.cinema .work-frame.cinema-stage video {
 	z-index: 1;
 	pointer-events: none;
 	background: linear-gradient(to top, rgba(0, 0, 0, 0.36), rgba(0, 0, 0, 0));
-	-webkit-backdrop-filter: blur(12px);
-	backdrop-filter: blur(12px);
-	-webkit-mask-image: linear-gradient(to top, #000 30%, transparent);
-	mask-image: linear-gradient(to top, #000 30%, transparent);
 	transition: opacity 0.8s ease;
 }
+body.cinema .slider::before,
 body.cinema .slider::after {
 	opacity: 0;
 }
@@ -736,8 +747,8 @@ body.cinema .cinema-stage .lens-canvas {
 		flex-basis: 100%;
 	}
 }
-/* Design: die Leiste liegt auf den Bildern — weiß, mit demselben
-   leisen Verlauf, hier von oben */
+/* Design: die Leiste liegt auf den Bildern — weiß, mit einem leisen
+   Schatten von oben; die Unschärfe dort kommt von der Vignette */
 body:has(.media-hero) .topbar {
 	color: #fff;
 }
@@ -749,10 +760,6 @@ body:has(.media-hero) .topbar::before {
 	z-index: -1;
 	pointer-events: none;
 	background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0));
-	-webkit-backdrop-filter: blur(12px);
-	backdrop-filter: blur(12px);
-	-webkit-mask-image: linear-gradient(to bottom, #000 30%, transparent);
-	mask-image: linear-gradient(to bottom, #000 30%, transparent);
 }
 
 /* Mehr erfahren: das weiße Feld taucht aus der Unschärfe am unteren
