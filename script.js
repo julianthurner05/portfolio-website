@@ -572,15 +572,15 @@ for (const sl of document.querySelectorAll(".slider")) {
 		}
 		void main() {
 			vec2 p = v - 0.5;
-			// Vignettenform: Oval im Format der Figur, 1 an den Kantenmitten,
-			// ~1.4 in den Ecken — dieselbe Form wie der Weichzeichner
-			float e = length(p * 2.0);
-			float a = max(smoothstep(0.8, 0.86, e), solid);
+			// Vignettenform: dasselbe Oval wie der Weichzeichner (Radius 54 %
+			// der Figur), ~0.93 an den Kantenmitten, ~1.3 in den Ecken
+			float e = length(p * 2.0) / 1.08;
+			float a = max(smoothstep(0.8, 0.84, e), solid);
 			if (a <= 0.0) {
 				gl_FragColor = vec4(0.0);
 				return;
 			}
-			float k = smoothstep(0.86, 1.12, e);
+			float k = smoothstep(0.84, 1.2, e);
 			float c = ca * k;
 			// in Höhen-Einheiten drehen, damit die Bögen rund bleiben
 			vec2 P = rot(vec2(p.x * aspect, p.y), twist * k);

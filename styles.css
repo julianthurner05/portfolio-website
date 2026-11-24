@@ -663,8 +663,8 @@ body.cinema .work-frame.cinema-stage video {
 	pointer-events: none;
 	-webkit-backdrop-filter: blur(12px);
 	backdrop-filter: blur(12px);
-	-webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, transparent 68%, #000 105%);
-	mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, transparent 68%, #000 105%);
+	-webkit-mask-image: radial-gradient(ellipse 54% 54% at 50% 50%, transparent 82%, #000 104%);
+	mask-image: radial-gradient(ellipse 54% 54% at 50% 50%, transparent 82%, #000 104%);
 	transition: opacity 0.8s ease;
 }
 /* nur unten ein leiser Schatten, damit die weiße Titelzeile auch auf
