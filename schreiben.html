@@ -70,8 +70,6 @@
 				.top:focus-within,
 				.top:hover ~ main,
 				.top:focus-within ~ main,
-				body.in-fassungen .top,
-				body.in-fassungen main,
 				body.im-papierkorb .top,
 				body.im-papierkorb main {
 					transform: none;
@@ -108,37 +106,44 @@
 			.papierkorb {
 				margin-left: auto;
 			}
-			/* klein in der rechten oberen Ecke, außerhalb der Leiste */
+			/* Fassungen: kleiner Blätterer in der rechten oberen Ecke,
+			   unabhängig von der Leiste */
 			.fassungen {
 				position: fixed;
 				top: calc(var(--pad) * 0.7);
 				right: var(--pad);
 				z-index: 20;
+				display: flex;
+				align-items: baseline;
+				gap: 0.5rem;
+				font-size: 0.8rem;
+				color: rgba(20, 20, 20, 0.45);
+			}
+			.fassungen button {
 				border: 0;
 				background: none;
 				font: inherit;
-				font-size: 0.7rem;
-				color: rgba(20, 20, 20, 0.45);
+				color: inherit;
 				padding: 0;
 				cursor: pointer;
 				-webkit-text-stroke: 0 currentColor;
 				transition: -webkit-text-stroke-width 0.25s ease;
 			}
-			.fassungen:hover {
+			.fassungen button:hover {
 				-webkit-text-stroke-width: 0.45px;
+			}
+			.fassungen [hidden] {
+				display: none;
+			}
+			.f-stand {
+				font-size: 0.7rem;
 			}
 			/* rechts Platz lassen, damit der Papierkorb nicht darunterrutscht */
 			.projzeile {
 				padding-right: calc(var(--pad) + 5rem);
 			}
-			.fassungen.active {
-				color: var(--black);
-				border-bottom: 1.5px solid currentColor;
-				padding-bottom: 1px;
-			}
 			body.im-papierkorb .new,
-			body.im-papierkorb .fassungen,
-			body.in-fassungen .new {
+			body.im-papierkorb .fassungen {
 				visibility: hidden;
 			}
 			.textzeile {
@@ -336,7 +341,12 @@
 				<div class="span"></div>
 			</div>
 		</header>
-		<button class="fassungen" type="button">Fassungen</button>
+		<div class="fassungen" aria-label="Fassungen">
+			<button class="f-zurueck" type="button" aria-label="Ältere Fassung">←</button>
+			<span class="f-stand"></span>
+			<button class="f-vor" type="button" aria-label="Neuere Fassung">→</button>
+			<button class="f-neu" type="button" aria-label="Fassung sichern">+</button>
+		</div>
 
 		<main>
 			<div class="schluessel" hidden>
@@ -401,19 +411,10 @@
 			const barEl = document.querySelector(".docs");
 			const projsEl = document.querySelector(".projs");
 			const pkBtn = document.querySelector(".papierkorb");
-			const faBtn = document.querySelector(".fassungen");
 			const titleEl = document.querySelector(".title");
 			const bodyEl = document.querySelector(".body");
 			let imPapierkorb = false;
 			let trashOffen = null;
-			let imFassungen = false;
-			let fassungOffen = null;
-			const fassungenAus = () => {
-				imFassungen = false;
-				fassungOffen = null;
-				document.body.classList.remove("in-fassungen");
-				faBtn.classList.remove("active");
-			};
 			const papierkorbListe = () => {
 				try {
 					return (JSON.parse(localStorage.getItem(LT) || "[]") || []).filter(Boolean);
@@ -695,7 +696,6 @@
 				trashOffen = null;
 				document.body.classList.remove("im-papierkorb");
 				pkBtn.classList.remove("active");
-				fassungenAus();
 				filter = id;
 				persist();
 				for (const el of projsEl.children) el.classList.toggle("active", el.dataset.id === id);
@@ -787,88 +787,8 @@
 				}
 			};
 
-			const fassungsName = (v) => {
-				const z = new Date(v.t);
-				return (
-					z.toLocaleDateString("de-AT", { day: "numeric", month: "long" }) +
-					", " +
-					z.toLocaleTimeString("de-AT", { hour: "2-digit", minute: "2-digit" })
-				);
-			};
-
 			const renderDocs = () => {
 				barEl.innerHTML = "";
-				if (imFassungen) {
-					// Fassungen des aktiven Texts: sichern friert den Stand
-					// ein, Klick zeigt nur lesbar, ↩ holt zurück (der jetzige
-					// Stand wird dabei selbst zur Fassung), × löscht
-					const s = document.createElement("button");
-					s.type = "button";
-					s.className = "open";
-					s.textContent = "sichern";
-					s.addEventListener("click", () => {
-						merken();
-						const dd = cur();
-						(dd.v = dd.v || []).push({ t: Date.now(), title: dd.title, body: dd.body });
-						persist();
-						renderDocs();
-					});
-					barEl.append(s);
-					const d = cur();
-					const alle = d && d.v ? d.v : [];
-					for (const v of [...alle].reverse()) {
-						const nummer = alle.indexOf(v) + 1;
-						const wrap = document.createElement("span");
-						wrap.className = "doc" + (v.t === fassungOffen ? " active" : "");
-						const open = document.createElement("button");
-						open.type = "button";
-						open.className = "open";
-						open.textContent = nummer + " · " + fassungsName(v);
-						open.addEventListener("click", () => {
-							fassungOffen = v.t;
-							titleEl.contentEditable = "false";
-							bodyEl.contentEditable = "false";
-							titleEl.textContent = v.title;
-							bodyEl.textContent = v.body;
-							document.title = fassungsName(v) + " – Fassung";
-							renderDocs();
-							scrollAnpassen();
-						});
-						const holen = document.createElement("button");
-						holen.type = "button";
-						holen.className = "del";
-						holen.textContent = "↩";
-						holen.setAttribute("aria-label", "Fassung zurückholen");
-						holen.addEventListener("click", () => {
-							merken();
-							const dd = cur();
-							(dd.v = dd.v || []).push({ t: Date.now(), title: dd.title, body: dd.body });
-							dd.title = v.title;
-							dd.body = v.body;
-							persist();
-							fassungenAus();
-							renderDocs();
-							load();
-						});
-						const del = document.createElement("button");
-						del.type = "button";
-						del.className = "del";
-						del.textContent = "×";
-						del.setAttribute("aria-label", "Fassung löschen");
-						del.addEventListener("click", () => {
-							merken();
-							const dd = cur();
-							dd.v = (dd.v || []).filter((x) => x.t !== v.t);
-							if (!dd.v.length) delete dd.v;
-							persist();
-							if (fassungOffen === v.t) fassungOffen = null;
-							renderDocs();
-						});
-						wrap.append(open, holen, del);
-						barEl.append(wrap);
-					}
-					return;
-				}
 				if (imPapierkorb) {
 					// Papierkorb: Texte nur lesbar; Ziehen auf ein Projekt
 					// stellt wieder her
@@ -964,6 +884,8 @@
 				document.title = labelFor(d) + " – Schreiben";
 				scrollTo(0, 0);
 				scrollAnpassen();
+				fIndex = null;
+				fassungenZeigen();
 			};
 
 			const switchTo = (id) => {
@@ -1009,23 +931,7 @@
 				(pr && pr.auto ? bodyEl : titleEl).focus();
 			});
 
-			faBtn.addEventListener("click", () => {
-				if (imFassungen) {
-					fassungenAus();
-					renderDocs();
-					load();
-					return;
-				}
-				if (imPapierkorb) return;
-				imFassungen = true;
-				fassungOffen = null;
-				document.body.classList.add("in-fassungen");
-				faBtn.classList.add("active");
-				renderDocs();
-			});
-
 			pkBtn.addEventListener("click", () => {
-				fassungenAus();
 				imPapierkorb = true;
 				trashOffen = null;
 				document.body.classList.add("im-papierkorb");
@@ -1146,6 +1052,60 @@
 			};
 			ruler.addEventListener("pointerup", zuEnde);
 			ruler.addEventListener("pointercancel", zuEnde);
+
+			// Fassungen: ← blättert zur älteren, → zur neueren; am neuesten
+			// Stand sichert + den aktuellen Text als neue Fassung
+			const fZurueck = document.querySelector(".f-zurueck");
+			const fVor = document.querySelector(".f-vor");
+			const fNeu = document.querySelector(".f-neu");
+			const fStand = document.querySelector(".f-stand");
+			let fIndex = null; // null heißt: der aktuelle Stand
+			const fassungenZeigen = () => {
+				const d = cur();
+				const liste = (d && d.v) || [];
+				fZurueck.hidden = fIndex === null ? !liste.length : fIndex === 0;
+				fVor.hidden = fIndex === null;
+				fNeu.hidden = fIndex !== null;
+				fStand.textContent = fIndex === null ? "" : fIndex + 1 + "/" + liste.length;
+			};
+			const fassungZeigen = () => {
+				const v = cur().v[fIndex];
+				titleEl.contentEditable = "false";
+				bodyEl.contentEditable = "false";
+				titleEl.textContent = v.title;
+				bodyEl.textContent = v.body;
+				document.title = labelFor(v) + " – Fassung " + (fIndex + 1);
+				fassungenZeigen();
+				scrollAnpassen();
+			};
+			fZurueck.addEventListener("click", () => {
+				const liste = (cur() && cur().v) || [];
+				if (fIndex === null) {
+					if (!liste.length) return;
+					fIndex = liste.length - 1;
+				} else if (fIndex > 0) {
+					fIndex--;
+				}
+				fassungZeigen();
+			});
+			fVor.addEventListener("click", () => {
+				const liste = (cur() && cur().v) || [];
+				if (fIndex === null) return;
+				if (fIndex >= liste.length - 1) {
+					load();
+				} else {
+					fIndex++;
+					fassungZeigen();
+				}
+			});
+			fNeu.addEventListener("click", () => {
+				merken();
+				const d = cur();
+				(d.v = d.v || []).push({ t: Date.now(), title: d.title, body: d.body });
+				persist();
+				fStand.textContent = "gesichert";
+				setTimeout(fassungenZeigen, 900);
+			});
 
 			renderBar();
 			load();
