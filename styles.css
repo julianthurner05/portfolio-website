@@ -642,24 +642,43 @@ body.listening .track.current {
 	display: grid;
 	place-items: center;
 }
+/* Medien vollformatig: jedes Bild füllt den ganzen Viewport */
 .work-frame {
 	position: relative;
-	width: min(72vw, 115svh);
-	height: min(58svh, 46vw);
-	translate: 0 -1.5rem;
-	transition: width 0.8s ease, height 0.8s ease, translate 0.8s ease;
-}
-body.cinema .work-frame.cinema-stage {
 	width: 100%;
 	height: 100%;
-	translate: 0 0;
 }
 .work-frame img,
 .work-frame video {
 	width: 100%;
 	height: 100%;
-	object-fit: contain;
+	object-fit: cover;
 	display: block;
+}
+/* im Kino zählt der ganze Film, nicht das volle Format */
+body.cinema .work-frame.cinema-stage video {
+	object-fit: contain;
+}
+/* unten ein ganz leichter Verlauf mit weichgezeichnetem Hintergrund,
+   damit der weiße Titel auf jedem Bild trägt; die Unschärfe läuft
+   nach oben aus, statt an einer Kante zu enden. Sitzt in jeder Figur,
+   damit der Film-Knopf darüber bleibt */
+.slides figure::after {
+	content: "";
+	position: absolute;
+	inset: auto 0 0 0;
+	height: clamp(9rem, 30svh, 17rem);
+	z-index: 1;
+	pointer-events: none;
+	background: linear-gradient(to top, rgba(0, 0, 0, 0.36), rgba(0, 0, 0, 0));
+	-webkit-backdrop-filter: blur(12px);
+	backdrop-filter: blur(12px);
+	-webkit-mask-image: linear-gradient(to top, #000 30%, transparent);
+	mask-image: linear-gradient(to top, #000 30%, transparent);
+	transition: opacity 0.8s ease;
+}
+body.cinema .slides figure::after {
+	opacity: 0;
 }
 .slide-nav {
 	position: absolute;
@@ -683,11 +702,45 @@ body.cinema .work-frame.cinema-stage {
 .media-hero h1,
 .media-hero .more {
 	color: #fff;
-	mix-blend-mode: difference;
 	z-index: 2;
 }
 .media-hero h1 {
-	font-size: clamp(1.9rem, 4vw, 3.2rem);
+	font-weight: 400;
+	font-size: clamp(1.35rem, 2.4vw, 2rem);
+	line-height: 1.1;
+	letter-spacing: -0.02em;
+	max-width: none;
+}
+/* Titel und "Mehr erfahren" teilen sich eine Grundlinie */
+.media-hero {
+	align-items: last baseline;
+}
+.media-hero .more {
+	margin-bottom: 0;
+}
+/* schmal: der Film-Knopf rückt über die Titelzeile */
+@media (max-width: 760px) {
+	.slides .film-btn {
+		bottom: calc(var(--pad) + 4rem);
+	}
+}
+/* Design: die Leiste liegt jetzt auf den Bildern — weiß, mit demselben
+   leisen Verlauf, hier von oben */
+body:has(.media-hero) .topbar {
+	color: #fff;
+}
+body:has(.media-hero) .topbar::before {
+	content: "";
+	position: absolute;
+	inset: 0 0 auto 0;
+	height: 180%;
+	z-index: -1;
+	pointer-events: none;
+	background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0));
+	-webkit-backdrop-filter: blur(12px);
+	backdrop-filter: blur(12px);
+	-webkit-mask-image: linear-gradient(to bottom, #000 30%, transparent);
+	mask-image: linear-gradient(to bottom, #000 30%, transparent);
 }
 .media-hero .infobox {
 	z-index: 3;
@@ -707,7 +760,8 @@ body.cinema .work-frame.cinema-stage {
 .film-btn {
 	position: absolute;
 	left: 50%;
-	bottom: 1.2rem;
+	/* auf einer Linie mit "Mehr erfahren" */
+	bottom: var(--pad);
 	translate: -50%;
 	z-index: 2;
 	background: var(--paper);
@@ -863,7 +917,7 @@ body.cinema .cinema-bar {
 	font-variant-numeric: tabular-nums;
 }
 
-.cinema-close {
+body.cinema .cinema-close {
 	opacity: 1;
 	pointer-events: auto;
 }
