@@ -113,14 +113,22 @@
 			}
 			/* ohne top bleibt er an seinem Platz im Fluss, also genau dort,
 			   wo der Text beginnt */
+			/* Sticky am Textbeginn, ohne Platz im Fluss zu nehmen. Der
+			   Versatz bringt die Versalhöhe von "Version" bündig mit dem
+			   Titel: Otto hat Versalhöhe 0.701 und Oberlänge 0.96 */
 			.fassungen {
-				position: absolute;
-				right: var(--pad);
-				height: calc(clamp(1.25rem, 2.3vw, 2rem) * 1.3);
+				position: sticky;
+				top: calc(var(--pad) + 7.6rem);
+				z-index: 5;
+				height: 0;
+				margin-right: var(--pad);
+				transform: translateY(calc(clamp(1.25rem, 2.3vw, 2rem) * 0.299 - 0.1893rem));
 				display: flex;
-				align-items: center;
+				justify-content: flex-end;
+				align-items: baseline;
 				gap: 0.5rem;
 				font-size: 0.8rem;
+				line-height: 1;
 				color: rgba(20, 20, 20, 0.45);
 			}
 			/* gleich breite Felder für ←, → und +, damit nichts springt */
@@ -1113,9 +1121,12 @@
 			renderBar();
 			load();
 
-			// Kopfhöhe für das Verstecken der Leiste bereitstellen
+			// Kopfhöhe für das Verstecken der Leiste bereitstellen, und der
+			// Blätterer klebt genau dort, wo das Blatt beginnt (auch wenn
+			// das Schlüsselfeld darüber steht)
 			const kopfMessen = () => {
 				document.documentElement.style.setProperty("--kopf", document.querySelector(".top").offsetHeight + "px");
+				document.querySelector(".fassungen").style.top = document.querySelector(".sheet").offsetTop + "px";
 			};
 			kopfMessen();
 			addEventListener("resize", kopfMessen);
@@ -1152,6 +1163,7 @@
 			const schluesselInput = schluesselEl.querySelector("input");
 			const schluesselFragen = () => {
 				schluesselEl.hidden = false;
+				kopfMessen();
 			};
 			schluesselInput.addEventListener("keydown", async (e) => {
 				if (e.key !== "Enter") return;
@@ -1160,6 +1172,7 @@
 				schluessel = wert;
 				localStorage.setItem(LK, schluessel);
 				schluesselEl.hidden = true;
+				kopfMessen();
 				const z = await serverLaden();
 				if (!uebernehmen(z) && schluessel) serverSichern();
 			});
