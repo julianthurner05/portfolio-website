@@ -572,16 +572,17 @@ for (const sl of document.querySelectorAll(".slider")) {
 		}
 		void main() {
 			vec2 p = v - 0.5;
-			// abgerundetes Rechteck: 1 an den Kantenmitten, etwas mehr in den
-			// Ecken; so ist der Streifen an allen vier Seiten gleich anteilig
+			// fast rechteckig abgerundet: 1 an den Kantenmitten, wenig mehr in
+			// den Ecken; so ist der Streifen an allen vier Seiten gleich
+			// anteilig und greift auch in den Ecken kaum tiefer ins Bild
 			vec2 e2 = abs(p) * 2.0;
-			float e = pow(pow(e2.x, 5.0) + pow(e2.y, 5.0), 0.2);
-			float a = max(smoothstep(0.86, 0.9, e), solid);
+			float e = pow(pow(e2.x, 8.0) + pow(e2.y, 8.0), 0.125);
+			float a = max(smoothstep(0.93, 0.955, e), solid);
 			if (a <= 0.0) {
 				gl_FragColor = vec4(0.0);
 				return;
 			}
-			float k = smoothstep(0.9, 1.1, e);
+			float k = smoothstep(0.955, 1.07, e);
 			float c = ca * k;
 			// in Höhen-Einheiten drehen, damit die Bögen rund bleiben
 			vec2 P = rot(vec2(p.x * aspect, p.y), twist * k);
@@ -637,9 +638,9 @@ for (const sl of document.querySelectorAll(".slider")) {
 	gl.uniform1i(u("t"), 0);
 	gl.uniform1i(u("tb"), 1);
 	gl.uniform1f(u("twist"), 0.08);
-	gl.uniform1f(u("spin"), 0.02);
-	gl.uniform1f(u("smear"), 0.03);
-	gl.uniform1f(u("soft"), 0.75);
+	gl.uniform1f(u("spin"), 0.015);
+	gl.uniform1f(u("smear"), 0.022);
+	gl.uniform1f(u("soft"), 0.55);
 	gl.uniform1f(u("ca"), 0.006);
 	const uCrop = u("crop");
 	const uAspect = u("aspect");
