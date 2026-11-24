@@ -31,43 +31,6 @@ for (const hero of document.querySelectorAll(".hero")) {
 	});
 }
 
-// Objektiv: die Bilder sind zum Rand hin minimal verzogen, Blau eine
-// Spur weiter als Rot/Grün. Der SVG-Filter liegt direkt auf den Bildern
-// (Filter auf HTML-Elementen können alle Browser)
-const lensMap = document.getElementById("lens-map");
-const lensFrame = document.querySelector(".work-frame");
-if (lensMap && lensFrame) {
-	// Verschiebungskarte: Rot = x, Grün = y, Mitte neutral, nach außen
-	// mit r² zunehmend Richtung Mitte gezogen (Ränder leicht gedehnt)
-	const N = 256;
-	const c = document.createElement("canvas");
-	c.width = c.height = N;
-	const g = c.getContext("2d");
-	const img = g.createImageData(N, N);
-	for (let y = 0; y < N; y++) {
-		for (let x = 0; x < N; x++) {
-			const u = ((x + 0.5) / N) * 2 - 1;
-			const v = ((y + 0.5) / N) * 2 - 1;
-			const r2 = (u * u + v * v) / 2;
-			const o = (y * N + x) * 4;
-			img.data[o] = 128 - 127 * u * r2;
-			img.data[o + 1] = 128 - 127 * v * r2;
-			img.data[o + 2] = 128;
-			img.data[o + 3] = 255;
-		}
-	}
-	g.putImageData(img, 0, 0);
-	lensMap.setAttribute("href", c.toDataURL());
-	// Karte auf Bildgröße ziehen (alle Bilder sind gleich groß: vollformatig)
-	const fit = () => {
-		lensMap.setAttribute("width", lensFrame.clientWidth);
-		lensMap.setAttribute("height", lensFrame.clientHeight);
-	};
-	fit();
-	addEventListener("resize", fit);
-	document.documentElement.classList.add("lens");
-}
-
 // Hörseite: ein gemeinsamer Player, eine Spur zur Zeit,
 // rote Linie unter der laufenden Zeile zeigt den Fortschritt
 const trackList = document.querySelectorAll(".track");
