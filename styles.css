@@ -201,13 +201,6 @@ main.snap {
 	line-height: 1;
 	letter-spacing: -0.02em;
 }
-.infobox .tag {
-	font-size: 0.8rem;
-	letter-spacing: 0.04em;
-	border: var(--line) solid var(--black);
-	border-radius: 999px;
-	padding: 0.3em 1em;
-}
 .infobox .close {
 	margin-left: auto;
 	border: 0;
@@ -620,7 +613,7 @@ body.listening .track.current {
 	transition: transform 1.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Design: ein Projekt pro Viewport, Medien als gerahmter Slider */
+/* Design: ein Projekt pro Viewport, Medien vollformatig als Slider */
 .slider {
 	position: absolute;
 	inset: 0;
@@ -659,26 +652,41 @@ body.listening .track.current {
 body.cinema .work-frame.cinema-stage video {
 	object-fit: contain;
 }
-/* unten ein ganz leichter Verlauf mit weichgezeichnetem Hintergrund,
-   damit der weiße Titel auf jedem Bild trägt; die Unschärfe läuft
-   nach oben aus, statt an einer Kante zu enden. Sitzt in jeder Figur,
-   damit der Film-Knopf darüber bleibt */
-.slides figure::after {
+/* Objektiv-Vignette: zum Rand hin etwas unscharf und dunkler — genau
+   dort sitzen Leiste, Titel und Pfeile. Den leichten Verzug trägt jedes
+   Bild selbst (SVG-Filter #lens) */
+.lens .work-frame img {
+	filter: url(#lens);
+}
+.slide-clip::after,
+.slider::after {
 	content: "";
 	position: absolute;
-	inset: auto 0 0 0;
-	height: clamp(9rem, 30svh, 17rem);
+	inset: 0;
 	z-index: 1;
 	pointer-events: none;
-	background: linear-gradient(to top, rgba(0, 0, 0, 0.36), rgba(0, 0, 0, 0));
-	-webkit-backdrop-filter: blur(12px);
-	backdrop-filter: blur(12px);
-	-webkit-mask-image: linear-gradient(to top, #000 30%, transparent);
-	mask-image: linear-gradient(to top, #000 30%, transparent);
-	transition: opacity 0.8s ease;
+	transition: opacity 0.8s ease, visibility 0s;
 }
-body.cinema .slides figure::after {
+.slide-clip::after {
+	-webkit-backdrop-filter: blur(5px);
+	backdrop-filter: blur(5px);
+	-webkit-mask-image: radial-gradient(ellipse 66% 60% at 50% 48%, transparent 50%, #000 100%);
+	mask-image: radial-gradient(ellipse 66% 60% at 50% 48%, transparent 50%, #000 100%);
+}
+.slider::after {
+	background: radial-gradient(ellipse 66% 60% at 50% 48%, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.34) 100%);
+}
+body.cinema .slide-clip::after,
+body.cinema .slider::after {
 	opacity: 0;
+	visibility: hidden;
+	transition: opacity 0.8s ease, visibility 0s 0.8s;
+}
+.lens-defs {
+	position: absolute;
+	width: 0;
+	height: 0;
+	overflow: hidden;
 }
 .slide-nav {
 	position: absolute;
@@ -688,7 +696,8 @@ body.cinema .slides figure::after {
 	border: 0;
 	background: none;
 	color: #fff;
-	mix-blend-mode: difference;
+	/* ganz weicher Schatten, damit Weiß auch auf weißen Seiten steht */
+	text-shadow: 0 0 14px rgba(0, 0, 0, 0.35);
 	font: inherit;
 	font-size: 1.8rem;
 	padding: 0.8rem;
@@ -710,42 +719,106 @@ body.cinema .slides figure::after {
 	line-height: 1.1;
 	letter-spacing: -0.02em;
 	max-width: none;
+	/* schiebt die Knöpfe nach rechts zusammen */
+	margin-right: auto;
 }
-/* Titel und "Mehr erfahren" teilen sich eine Grundlinie */
+/* Titel und Knöpfe teilen sich eine Grundlinie */
 .media-hero {
 	align-items: last baseline;
 }
 .media-hero .more {
 	margin-bottom: 0;
 }
-/* schmal: der Film-Knopf rückt über die Titelzeile */
+/* schmal: der Titel bekommt die ganze Zeile, die Knöpfe darunter */
 @media (max-width: 760px) {
-	.slides .film-btn {
-		bottom: calc(var(--pad) + 4rem);
+	.media-hero {
+		flex-wrap: wrap;
+		/* die Zeilen bleiben unten statt sich übers Bild zu verteilen */
+		align-content: flex-end;
+	}
+	.media-hero h1 {
+		flex-basis: 100%;
 	}
 }
-/* Design: die Leiste liegt jetzt auf den Bildern — weiß, mit demselben
-   leisen Verlauf, hier von oben */
+/* Design: die Leiste liegt auf den Bildern, weiß über der Vignette */
 body:has(.media-hero) .topbar {
 	color: #fff;
 }
-body:has(.media-hero) .topbar::before {
-	content: "";
-	position: absolute;
-	inset: 0 0 auto 0;
-	height: 180%;
-	z-index: -1;
-	pointer-events: none;
-	background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0));
-	-webkit-backdrop-filter: blur(12px);
-	backdrop-filter: blur(12px);
-	-webkit-mask-image: linear-gradient(to bottom, #000 30%, transparent);
-	mask-image: linear-gradient(to bottom, #000 30%, transparent);
+
+/* Mehr erfahren: die Unschärfe wächst vom Rand her übers ganze Bild,
+   der Text tritt aus ihr hervor */
+@property --veil {
+	syntax: "<percentage>";
+	inherits: false;
+	initial-value: 120%;
 }
 .media-hero .infobox {
+	inset: 0;
+	height: auto;
 	z-index: 3;
-	/* das Panel bleibt niedrig statt fast bildschirmhoch */
-	height: min(26rem, 62svh);
+	transform: none;
+	border-radius: 0;
+	color: #fff;
+	background: linear-gradient(to top, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.16));
+	-webkit-backdrop-filter: blur(22px);
+	backdrop-filter: blur(22px);
+	/* --veil: wo die klare Mitte endet; 120% = gar nichts verdeckt,
+	   -45% = alles verdeckt */
+	--veil: 120%;
+	-webkit-mask-image: radial-gradient(ellipse 66% 60% at 50% 48%, transparent var(--veil), #000 calc(var(--veil) + 45%));
+	mask-image: radial-gradient(ellipse 66% 60% at 50% 48%, transparent var(--veil), #000 calc(var(--veil) + 45%));
+	align-content: end;
+	/* eine Spalte, so breit wie das Bild, nicht wie der längste Text */
+	grid-template-columns: minmax(0, 1fr);
+	gap: clamp(1.5rem, 4vh, 2.5rem);
+	padding-top: calc(var(--pad) + 3rem);
+	visibility: hidden;
+	transition: --veil 0.7s cubic-bezier(0.33, 1, 0.36, 1), visibility 0s 0.7s;
+}
+.media-hero.open .infobox {
+	--veil: -45%;
+	visibility: visible;
+	transition: --veil 1.1s cubic-bezier(0.33, 1, 0.36, 1), visibility 0s;
+}
+.media-hero .infobox > * {
+	opacity: 0;
+	filter: blur(14px);
+	transition: opacity 0.35s ease, filter 0.35s ease;
+}
+.media-hero.open .infobox > * {
+	opacity: 1;
+	filter: blur(0);
+	transition: opacity 0.9s ease 0.3s, filter 1.2s cubic-bezier(0.33, 1, 0.36, 1) 0.3s;
+}
+.media-hero.open .infobox > .cols {
+	transition-delay: 0.45s;
+}
+.media-hero .infobox h2 {
+	font-weight: 400;
+	font-size: clamp(1.35rem, 2.4vw, 2rem);
+	line-height: 1.1;
+	letter-spacing: -0.02em;
+}
+.media-hero .infobox .cols {
+	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+	gap: 1.5rem clamp(2rem, 4vw, 4rem);
+}
+.media-hero .infobox .cols p {
+	font-size: clamp(1.15rem, 1.6vw, 1.45rem);
+	line-height: 1.38;
+	letter-spacing: -0.01em;
+	max-width: 34rem;
+}
+.media-hero .infobox .close:hover {
+	color: var(--yellow);
+}
+/* offen: Titelzeile und Pfeile treten zurück */
+.media-hero.open h1,
+.media-hero.open .more,
+.media-hero.open .film-btn,
+.media-hero.open .slide-nav {
+	opacity: 0;
+	pointer-events: none;
 }
 @media (prefers-reduced-motion: reduce) {
 	.slides {
@@ -757,16 +830,22 @@ body:has(.media-hero) .topbar::before {
 .slides figure {
 	position: relative;
 }
+/* "Film anschauen" steht in der Titelzeile links von "Mehr erfahren"
+   und zeigt sich nur auf dem Bild mit dem Film */
 .film-btn {
-	position: absolute;
-	left: 50%;
-	/* auf einer Linie mit "Mehr erfahren" */
-	bottom: var(--pad);
-	translate: -50%;
+	position: relative;
 	z-index: 2;
+	flex: none;
 	background: var(--paper);
-	border: 0;
-	transition: opacity 0.8s ease;
+	color: var(--black);
+	border-color: var(--paper);
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.6s ease;
+}
+.film-btn.on {
+	opacity: 1;
+	pointer-events: auto;
 }
 .media-hero {
 	transition: background 0.8s ease;
@@ -774,7 +853,7 @@ body:has(.media-hero) .topbar::before {
 .media-hero h1,
 .media-hero .more,
 .slide-nav {
-	transition: opacity 0.8s ease;
+	transition: opacity 0.6s ease;
 }
 body.cinema .media-hero {
 	background: #000;

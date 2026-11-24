@@ -9,20 +9,63 @@ addEventListener("keydown", (e) => {
 	}
 });
 
-// Infobox-Panel pro Projekt: fährt von unten hoch, X schließt
+// Infobox pro Projekt: tritt aus der Unschärfe hervor; X, Escape oder
+// ein Klick in die Unschärfe schließt
 for (const hero of document.querySelectorAll(".hero")) {
 	const more = hero.querySelector(".more");
 	const close = hero.querySelector(".close");
+	const info = hero.querySelector(".infobox");
 	if (!more || !close) continue;
 	more.addEventListener("click", () => {
 		hero.classList.add("open");
 		more.setAttribute("aria-expanded", "true");
 	});
-	close.addEventListener("click", () => {
+	const shut = () => {
 		hero.classList.remove("open");
 		more.setAttribute("aria-expanded", "false");
 		more.focus();
+	};
+	close.addEventListener("click", shut);
+	info?.addEventListener("click", (e) => {
+		if (e.target === info) shut();
 	});
+}
+
+// Objektiv: die Bilder sind zum Rand hin minimal verzogen, Blau eine
+// Spur weiter als Rot/Grün. Der SVG-Filter liegt direkt auf den Bildern
+// (Filter auf HTML-Elementen können alle Browser)
+const lensMap = document.getElementById("lens-map");
+const lensFrame = document.querySelector(".work-frame");
+if (lensMap && lensFrame) {
+	// Verschiebungskarte: Rot = x, Grün = y, Mitte neutral, nach außen
+	// mit r² zunehmend Richtung Mitte gezogen (Ränder leicht gedehnt)
+	const N = 256;
+	const c = document.createElement("canvas");
+	c.width = c.height = N;
+	const g = c.getContext("2d");
+	const img = g.createImageData(N, N);
+	for (let y = 0; y < N; y++) {
+		for (let x = 0; x < N; x++) {
+			const u = ((x + 0.5) / N) * 2 - 1;
+			const v = ((y + 0.5) / N) * 2 - 1;
+			const r2 = (u * u + v * v) / 2;
+			const o = (y * N + x) * 4;
+			img.data[o] = 128 - 127 * u * r2;
+			img.data[o + 1] = 128 - 127 * v * r2;
+			img.data[o + 2] = 128;
+			img.data[o + 3] = 255;
+		}
+	}
+	g.putImageData(img, 0, 0);
+	lensMap.setAttribute("href", c.toDataURL());
+	// Karte auf Bildgröße ziehen (alle Bilder sind gleich groß: vollformatig)
+	const fit = () => {
+		lensMap.setAttribute("width", lensFrame.clientWidth);
+		lensMap.setAttribute("height", lensFrame.clientHeight);
+	};
+	fit();
+	addEventListener("resize", fit);
+	document.documentElement.classList.add("lens");
 }
 
 // Hörseite: ein gemeinsamer Player, eine Spur zur Zeit,
@@ -451,7 +494,7 @@ for (const sl of document.querySelectorAll(".slider")) {
 		const first = real[0].cloneNode(true);
 		const last = real[n - 1].cloneNode(true);
 		for (const c of [first, last]) {
-			for (const b of c.querySelectorAll(".film-btn")) b.remove();
+			c.removeAttribute("data-film");
 			for (const v of c.querySelectorAll("video")) {
 				v.removeAttribute("autoplay");
 				v.preload = "metadata";
@@ -467,6 +510,17 @@ for (const sl of document.querySelectorAll(".slider")) {
 		if (!anim) void slides.offsetWidth;
 	};
 	set(false);
+	// "Film anschauen" sitzt in der Titelzeile und zeigt sich nur,
+	// solange das Bild mit dem Film steht
+	const film = sl.closest(".hero")?.querySelector(".film-btn");
+	const showFilm = (on) => {
+		if (!film) return;
+		const f = slides.children[i];
+		const yes = on && f.hasAttribute("data-film");
+		film.classList.toggle("on", yes);
+		if (yes) film.figure = f;
+	};
+	showFilm(true);
 	const syncVideos = () => {
 		[...slides.children].forEach((f, k) => {
 			const v = f.querySelector("video");
@@ -487,6 +541,7 @@ for (const sl of document.querySelectorAll(".slider")) {
 			set(false);
 		}
 		syncVideos();
+		showFilm(true);
 	};
 	const go = (d) => {
 		if (n < 2) return;
@@ -494,10 +549,12 @@ for (const sl of document.querySelectorAll(".slider")) {
 			i = ((i - 1 + d + n) % n) + 1;
 			set(false);
 			syncVideos();
+			showFilm(true);
 			return;
 		}
 		if (busy) return;
 		busy = true;
+		showFilm(false);
 		i += d;
 		set(true);
 	};
@@ -537,12 +594,13 @@ const closeCinema = () => {
 };
 for (const btn of document.querySelectorAll(".film-btn")) {
 	btn.addEventListener("click", () => {
+		if (!btn.figure) return;
 		// ein offenes Info-Panel schließt mit
 		for (const hero of document.querySelectorAll(".hero.open")) {
 			hero.classList.remove("open");
 			hero.querySelector(".more").setAttribute("aria-expanded", "false");
 		}
-		cinemaFrame = btn.closest(".work-frame");
+		cinemaFrame = btn.figure.querySelector(".work-frame");
 		cinemaVideo = cinemaFrame.querySelector("video");
 		cinemaFrame.classList.add("cinema-stage");
 		document.body.classList.add("cinema");
