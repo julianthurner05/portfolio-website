@@ -567,10 +567,10 @@ for (const sl of document.querySelectorAll(".slider")) {
 			float c = ca * r4;
 			vec3 col = vec3(0.0);
 			float wsum = 0.0;
-			for (int i = 0; i < 12; i++) {
+			for (int i = 0; i < 24; i++) {
 				float fi = float(i);
 				float ang = fi * 2.39996;
-				float rr = sqrt((fi + 0.5) / 12.0) * rad;
+				float rr = sqrt((fi + 0.5) / 24.0) * rad;
 				vec2 g = f + vec2(cos(ang), sin(ang)) * rr * px;
 				vec2 d = g - 0.5;
 				vec3 s = vec3(
@@ -614,9 +614,9 @@ for (const sl of document.querySelectorAll(".slider")) {
 	const uCrop = u("crop");
 	const uAspect = u("aspect");
 	const uPx = u("px");
-	gl.uniform1f(u("blur"), 6);
+	gl.uniform1f(u("blur"), 12);
 	gl.uniform1f(u("ca"), 0.005);
-	gl.uniform1f(u("warp"), 0.03);
+	gl.uniform1f(u("warp"), 0.06);
 
 	// Leinwand in CSS-Pixeln: am Rand ist ohnehin alles weich, und so
 	// bleibt der Speicher klein
