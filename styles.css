@@ -654,7 +654,8 @@ body.cinema .work-frame.cinema-stage video {
 }
 /* Weichzeichner in Vignettenform: die Mitte bleibt klar, zu allen vier
    Rändern hin wird es zunehmend unscharf, in den Ecken am meisten —
-   ohne abzudunkeln */
+   ohne abzudunkeln. Nur der Rückfall ohne WebGL; sonst rechnet der
+   Shader die Unschärfe (siehe script.js, .lensgl) */
 .slider::after {
 	content: "";
 	position: absolute;
@@ -683,7 +684,10 @@ body.cinema .slider::before,
 body.cinema .slider::after {
 	opacity: 0;
 }
-/* Wisch-Rand: Leinwand je Figur (WebGL, siehe script.js) */
+.lensgl .slider::after {
+	display: none;
+}
+/* Rand-Unschärfe: Leinwand je Figur (WebGL, siehe script.js) */
 .lens-canvas {
 	position: absolute;
 	inset: 0;

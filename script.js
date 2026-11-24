@@ -522,13 +522,13 @@ for (const sl of document.querySelectorAll(".slider")) {
 	sl.querySelector(".next").addEventListener("click", () => go(1));
 }
 
-// Wisch-Rand per WebGL, angelehnt an Daniel Kramers Cover-Foto zu
-// "Bringing It All Back Home": in Vignettenform zum Bildrand hin ist
-// das Bild nach außen zunehmend verdreht, wie ein Wirbel, darüber
-// eine leise Wischspur und ein Hauch Farbsaum; innen bleibt das scharfe
-// Original. Ein gemeinsamer WebGL-Kontext
-// rechnet, jede Figur bekommt eine Leinwand darüber. Läuft nach dem
-// Karussell, damit auch die Klone eine haben
+// Rand-Unschärfe per WebGL, angelehnt an Daniel Kramers Cover-Foto zu
+// "Bringing It All Back Home": in Vignettenform (etwas eckiger als ein
+// Oval) wird das Bild zum Rand hin weich, kaum merklich verdreht, mit
+// einer leisen Wischspur und einem Hauch Farbsaum; innen bleibt das
+// scharfe Original. Ein gemeinsamer WebGL-Kontext rechnet, jede Figur
+// bekommt eine Leinwand darüber. Läuft nach dem Karussell, damit auch
+// die Klone eine haben; ohne WebGL bleibt der CSS-Weichzeichner
 (() => {
 	const frames = [...document.querySelectorAll(".work-frame")];
 	if (!frames.length) return;
@@ -546,13 +546,14 @@ for (const sl of document.querySelectorAll(".slider")) {
 		precision mediump float;
 		varying vec2 v;
 		uniform sampler2D t;  // scharf
-		uniform sampler2D tb; // auf die Hälfte verkleinert: für die Wischspur
+		uniform sampler2D tb; // auf die Hälfte verkleinert: für die Unschärfe
 		uniform vec2 crop;    // object-fit: cover nachbauen
 		uniform float aspect; // Breite / Höhe der Figur
 		uniform float twist;  // Verdrehung ganz außen (Bogenmaß)
 		uniform float spin;   // Länge der Wischspur entlang der Drehung (Bogenmaß)
 		uniform float smear;  // Zug der Wischspur nach außen (Anteil zur Mitte)
-		uniform float soft;   // wie stark die Wischspur eingemischt wird
+		uniform float blur;   // Unschärfe-Radius ganz außen (CSS-Pixel)
+		uniform vec2 px;      // ein CSS-Pixel in Figur-Koordinaten
 		uniform float ca;     // Farbsaum: Rot/Blau leicht anders vergrößert
 		uniform float solid;  // 1 = deckt ganz (Videos), 0 = innen durchsichtig
 		vec2 tc(vec2 f) { return 0.5 + (f - 0.5) * crop; }
@@ -572,15 +573,16 @@ for (const sl of document.querySelectorAll(".slider")) {
 		}
 		void main() {
 			vec2 p = v - 0.5;
-			// Vignettenform: dasselbe Oval wie der Weichzeichner (Radius 54 %
-			// der Figur), ~0.93 an den Kantenmitten, ~1.3 in den Ecken
-			float e = length(p * 2.0) / 1.08;
-			float a = max(smoothstep(0.8, 0.84, e), solid);
+			// Vignettenform, etwas eckiger als ein Oval (Superellipse n = 3):
+			// ~0.91 an den Kantenmitten, ~1.15 in den Ecken
+			vec2 e2 = abs(p) * 2.0;
+			float e = pow(pow(e2.x, 3.0) + pow(e2.y, 3.0), 1.0 / 3.0) / 1.1;
+			float a = max(smoothstep(0.76, 0.8, e), solid);
 			if (a <= 0.0) {
 				gl_FragColor = vec4(0.0);
 				return;
 			}
-			float k = smoothstep(0.84, 1.2, e);
+			float k = smoothstep(0.8, 1.08, e);
 			float c = ca * k;
 			// in Höhen-Einheiten drehen, damit die Bögen rund bleiben
 			vec2 P = rot(vec2(p.x * aspect, p.y), twist * k);
@@ -588,16 +590,21 @@ for (const sl of document.querySelectorAll(".slider")) {
 			if (k > 0.0) {
 				vec3 acc = vec3(0.0);
 				float ws = 0.0;
+				float rad = blur * k;
 				for (int i = 0; i < 24; i++) {
-					float s = float(i) / 23.0;
+					float fi = float(i);
+					float s = fi / 23.0;
+					float ang = fi * 2.39996;
+					float rr = sqrt((fi + 0.5) / 24.0) * rad;
 					vec2 R = rot(P, spin * k * (s - 0.5)) * (1.0 - smear * k * s);
-					vec3 x = rgb(tb, back(R), c);
+					vec2 g = back(R) + vec2(cos(ang), sin(ang)) * rr * px;
+					vec3 x = rgb(tb, g, c);
 					float l = dot(x, vec3(0.299, 0.587, 0.114));
-					float w = (1.0 - 0.5 * s) * (1.0 + 2.0 * l * l * l * l);
+					float w = 1.0 + 2.0 * l * l * l * l;
 					acc += x * w;
 					ws += w;
 				}
-				col = mix(col, acc / ws, soft * smoothstep(0.0, 0.3, k));
+				col = mix(col, acc / ws, smoothstep(0.0, 0.35, k));
 			}
 			gl_FragColor = vec4(col * a, a);
 		}`;
@@ -635,13 +642,14 @@ for (const sl of document.querySelectorAll(".slider")) {
 	const u = (n) => gl.getUniformLocation(prog, n);
 	gl.uniform1i(u("t"), 0);
 	gl.uniform1i(u("tb"), 1);
-	gl.uniform1f(u("twist"), 0.08);
-	gl.uniform1f(u("spin"), 0.015);
-	gl.uniform1f(u("smear"), 0.022);
-	gl.uniform1f(u("soft"), 0.55);
+	gl.uniform1f(u("twist"), 0.02);
+	gl.uniform1f(u("spin"), 0.006);
+	gl.uniform1f(u("smear"), 0.015);
+	gl.uniform1f(u("blur"), 12);
 	gl.uniform1f(u("ca"), 0.006);
 	const uCrop = u("crop");
 	const uAspect = u("aspect");
+	const uPx = u("px");
 	const uSolid = u("solid");
 
 	// Bilder: Leinwand in CSS-Pixeln, innen durchsichtig über dem scharfen
@@ -674,6 +682,7 @@ for (const sl of document.querySelectorAll(".slider")) {
 		gl.viewport(0, 0, RW, RH);
 		gl.uniform1f(uSolid, isVid ? 1 : 0);
 		gl.uniform2f(uCrop, ma > fa ? fa / ma : 1, ma > fa ? 1 : ma / fa);
+		gl.uniform2f(uPx, 1 / W, 1 / H);
 		gl.uniform1f(uAspect, fa);
 		const sw = Math.max(1, Math.round(mw / 2));
 		const sh = Math.max(1, Math.round(mh / 2));
@@ -739,6 +748,7 @@ for (const sl of document.querySelectorAll(".slider")) {
 		clearTimeout(resizeT);
 		resizeT = setTimeout(() => frames.forEach(render), 150);
 	});
+	document.documentElement.classList.add("lensgl");
 })();
 
 // Kinomodus: Film mit Ton auf Schwarz, alles andere blendet aus,
