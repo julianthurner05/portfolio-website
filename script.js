@@ -9,25 +9,19 @@ addEventListener("keydown", (e) => {
 	}
 });
 
-// Infobox pro Projekt: tritt aus der Unschärfe hervor; X, Escape oder
-// ein Klick in die Unschärfe schließt
+// Infobox-Panel pro Projekt: taucht aus der Unschärfe auf, X schließt
 for (const hero of document.querySelectorAll(".hero")) {
 	const more = hero.querySelector(".more");
 	const close = hero.querySelector(".close");
-	const info = hero.querySelector(".infobox");
 	if (!more || !close) continue;
 	more.addEventListener("click", () => {
 		hero.classList.add("open");
 		more.setAttribute("aria-expanded", "true");
 	});
-	const shut = () => {
+	close.addEventListener("click", () => {
 		hero.classList.remove("open");
 		more.setAttribute("aria-expanded", "false");
 		more.focus();
-	};
-	close.addEventListener("click", shut);
-	info?.addEventListener("click", (e) => {
-		if (e.target === info) shut();
 	});
 }
 
@@ -527,6 +521,183 @@ for (const sl of document.querySelectorAll(".slider")) {
 	sl.querySelector(".prev").addEventListener("click", () => go(-1));
 	sl.querySelector(".next").addEventListener("click", () => go(1));
 }
+
+// Objektiv per WebGL: zum Rand hin leicht verzogen, mit Farbsaum und
+// weicher Bokeh-Unschärfe (helle Stellen blühen auf). Ein gemeinsamer
+// WebGL-Kontext rechnet, jede Figur bekommt eine Leinwand darüber, die
+// zur Mitte hin durchsichtig wird: dort bleibt das scharfe Original.
+// Läuft nach dem Karussell, damit auch die Klone eine Leinwand haben
+(() => {
+	const frames = [...document.querySelectorAll(".work-frame")];
+	if (!frames.length) return;
+	const glc = document.createElement("canvas");
+	const gl = glc.getContext("webgl", { antialias: false, premultipliedAlpha: true });
+	if (!gl) return;
+	const vs = `
+		attribute vec2 a;
+		varying vec2 v;
+		void main() {
+			v = vec2(a.x * 0.5 + 0.5, 0.5 - a.y * 0.5);
+			gl_Position = vec4(a, 0.0, 1.0);
+		}`;
+	const fs = `
+		precision mediump float;
+		varying vec2 v;
+		uniform sampler2D t;
+		uniform vec2 crop;    // object-fit: cover nachbauen
+		uniform float aspect; // Breite / Höhe der Figur
+		uniform vec2 px;      // ein Pixel in Figur-Koordinaten
+		uniform float blur;   // größter Bokeh-Radius in Pixeln (Ecken)
+		uniform float ca;     // Farbsaum: Rot/Blau leicht anders vergrößert
+		uniform float warp;   // Verzug: Ränder gedehnt
+		vec2 tc(vec2 f) { return 0.5 + (f - 0.5) * crop; }
+		void main() {
+			vec2 p = v - 0.5;
+			// 0 in der Mitte, 1 in den Ecken, unabhängig vom Format
+			vec2 q = vec2(p.x * aspect, p.y) / (0.5 * sqrt(aspect * aspect + 1.0));
+			float r2 = dot(q, q);
+			float a = smoothstep(0.1, 0.3, r2);
+			if (a <= 0.0) {
+				gl_FragColor = vec4(0.0);
+				return;
+			}
+			float r4 = r2 * r2;
+			vec2 f = 0.5 + p * (1.0 - warp * r4);
+			float rad = blur * smoothstep(0.3, 1.0, r2);
+			float c = ca * r4;
+			vec3 col = vec3(0.0);
+			float wsum = 0.0;
+			for (int i = 0; i < 12; i++) {
+				float fi = float(i);
+				float ang = fi * 2.39996;
+				float rr = sqrt((fi + 0.5) / 12.0) * rad;
+				vec2 g = f + vec2(cos(ang), sin(ang)) * rr * px;
+				vec2 d = g - 0.5;
+				vec3 s = vec3(
+					texture2D(t, tc(0.5 + d * (1.0 + c))).r,
+					texture2D(t, tc(g)).g,
+					texture2D(t, tc(0.5 + d * (1.0 - c))).b
+				);
+				float l = dot(s, vec3(0.299, 0.587, 0.114));
+				float w = 1.0 + 3.0 * l * l * l * l;
+				col += s * w;
+				wsum += w;
+			}
+			gl_FragColor = vec4(col / wsum * a, a);
+		}`;
+	const shader = (type, src) => {
+		const sh = gl.createShader(type);
+		gl.shaderSource(sh, src);
+		gl.compileShader(sh);
+		return gl.getShaderParameter(sh, gl.COMPILE_STATUS) ? sh : null;
+	};
+	const vsh = shader(gl.VERTEX_SHADER, vs);
+	const fsh = shader(gl.FRAGMENT_SHADER, fs);
+	if (!vsh || !fsh) return;
+	const prog = gl.createProgram();
+	gl.attachShader(prog, vsh);
+	gl.attachShader(prog, fsh);
+	gl.linkProgram(prog);
+	if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return;
+	gl.useProgram(prog);
+	gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+	const aLoc = gl.getAttribLocation(prog, "a");
+	gl.enableVertexAttribArray(aLoc);
+	gl.vertexAttribPointer(aLoc, 2, gl.FLOAT, false, 0, 0);
+	gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+	const u = (n) => gl.getUniformLocation(prog, n);
+	const uCrop = u("crop");
+	const uAspect = u("aspect");
+	const uPx = u("px");
+	gl.uniform1f(u("blur"), 6);
+	gl.uniform1f(u("ca"), 0.005);
+	gl.uniform1f(u("warp"), 0.03);
+
+	// Leinwand in CSS-Pixeln: am Rand ist ohnehin alles weich, und so
+	// bleibt der Speicher klein
+	const render = (frame) => {
+		const m = frame.querySelector("img, video");
+		const mw = m.naturalWidth || m.videoWidth;
+		const mh = m.naturalHeight || m.videoHeight;
+		if (!mw || !mh || (m.tagName === "VIDEO" && m.readyState < 2)) return;
+		const W = frame.clientWidth;
+		const H = frame.clientHeight;
+		if (!W || !H) return;
+		const cv = frame.lensCanvas;
+		if (cv.width !== W || cv.height !== H) {
+			cv.width = W;
+			cv.height = H;
+		}
+		if (glc.width !== W || glc.height !== H) {
+			glc.width = W;
+			glc.height = H;
+		}
+		gl.viewport(0, 0, W, H);
+		const fa = W / H;
+		const ma = mw / mh;
+		gl.uniform2f(uCrop, ma > fa ? fa / ma : 1, ma > fa ? 1 : ma / fa);
+		gl.uniform1f(uAspect, fa);
+		gl.uniform2f(uPx, 1 / W, 1 / H);
+		try {
+			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, m);
+		} catch {
+			return;
+		}
+		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+		const c2 = cv.getContext("2d");
+		c2.clearRect(0, 0, W, H);
+		c2.drawImage(glc, 0, 0);
+	};
+
+	// nur sichtbare Figuren rechnen fortlaufend (laufende Videos)
+	const seen = new Set();
+	const io = new IntersectionObserver((entries) => {
+		for (const e of entries) {
+			if (e.isIntersecting) {
+				seen.add(e.target);
+				render(e.target);
+			} else {
+				seen.delete(e.target);
+			}
+		}
+	});
+	for (const f of frames) {
+		const cv = document.createElement("canvas");
+		cv.className = "lens-canvas";
+		cv.setAttribute("aria-hidden", "true");
+		f.appendChild(cv);
+		f.lensCanvas = cv;
+		io.observe(f);
+		const m = f.querySelector("img, video");
+		if (!m) continue;
+		if (m.tagName === "IMG") {
+			if (m.complete) render(f);
+			else m.addEventListener("load", () => render(f));
+			continue;
+		}
+		m.addEventListener("loadeddata", () => render(f));
+		m.addEventListener("seeked", () => render(f));
+		const frameCb = m.requestVideoFrameCallback
+			? (cb) => m.requestVideoFrameCallback(cb)
+			: (cb) => requestAnimationFrame(cb);
+		const tick = () => {
+			if (seen.has(f) && !m.paused) render(f);
+			frameCb(tick);
+		};
+		frameCb(tick);
+	}
+	let resizeT = 0;
+	addEventListener("resize", () => {
+		clearTimeout(resizeT);
+		resizeT = setTimeout(() => frames.forEach(render), 150);
+	});
+	document.documentElement.classList.add("lensgl");
+})();
 
 // Kinomodus: Film mit Ton auf Schwarz, alles andere blendet aus,
 // der Film skaliert dabei aufs Vollformat
