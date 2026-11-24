@@ -524,9 +524,9 @@ for (const sl of document.querySelectorAll(".slider")) {
 
 // Wisch-Rand per WebGL, angelehnt an Daniel Kramers Cover-Foto zu
 // "Bringing It All Back Home": in einem schmalen Streifen am Bildrand
-// wird das Bild leicht spiralig weggewischt — ein Stück nach außen und
-// dabei alles in dieselbe Richtung gedreht —, mit einem Hauch Farbsaum;
-// innen bleibt das scharfe Original. Ein gemeinsamer WebGL-Kontext
+// ist das Bild nach außen zunehmend verdreht, wie ein Wirbel, darüber
+// eine leise Wischspur und ein Hauch Farbsaum; innen bleibt das scharfe
+// Original. Ein gemeinsamer WebGL-Kontext
 // rechnet, jede Figur bekommt eine Leinwand darüber. Läuft nach dem
 // Karussell, damit auch die Klone eine haben
 (() => {
@@ -546,14 +546,22 @@ for (const sl of document.querySelectorAll(".slider")) {
 		precision mediump float;
 		varying vec2 v;
 		uniform sampler2D t;  // scharf
-		uniform sampler2D tb; // auf ein Viertel verkleinert: für den Wischer
+		uniform sampler2D tb; // auf die Hälfte verkleinert: für die Wischspur
 		uniform vec2 crop;    // object-fit: cover nachbauen
 		uniform float aspect; // Breite / Höhe der Figur
-		uniform float spin;   // größter Drehwinkel des Wischers (Bogenmaß)
-		uniform float smear;  // Zug nach außen (Anteil des Wegs zur Mitte)
+		uniform float twist;  // Verdrehung ganz außen (Bogenmaß)
+		uniform float spin;   // Länge der Wischspur entlang der Drehung (Bogenmaß)
+		uniform float smear;  // Zug der Wischspur nach außen (Anteil zur Mitte)
+		uniform float soft;   // wie stark die Wischspur eingemischt wird
 		uniform float ca;     // Farbsaum: Rot/Blau leicht anders vergrößert
 		uniform float solid;  // 1 = deckt ganz (Videos), 0 = innen durchsichtig
 		vec2 tc(vec2 f) { return 0.5 + (f - 0.5) * crop; }
+		vec2 rot(vec2 P, float th) {
+			float cs = cos(th);
+			float sn = sin(th);
+			return vec2(P.x * cs - P.y * sn, P.x * sn + P.y * cs);
+		}
+		vec2 back(vec2 R) { return 0.5 + vec2(R.x / aspect, R.y); }
 		vec3 rgb(sampler2D s, vec2 g, float c) {
 			vec2 d = g - 0.5;
 			return vec3(
@@ -575,25 +583,22 @@ for (const sl of document.querySelectorAll(".slider")) {
 			}
 			float k = smoothstep(0.9, 1.1, e);
 			float c = ca * k;
-			vec3 col = rgb(t, v, c);
+			// in Höhen-Einheiten drehen, damit die Bögen rund bleiben
+			vec2 P = rot(vec2(p.x * aspect, p.y), twist * k);
+			vec3 col = rgb(t, back(P), c);
 			if (k > 0.0) {
-				// in Höhen-Einheiten drehen, damit die Bögen rund bleiben
-				vec2 P = vec2(p.x * aspect, p.y);
 				vec3 acc = vec3(0.0);
 				float ws = 0.0;
 				for (int i = 0; i < 24; i++) {
 					float s = float(i) / 23.0;
-					float th = spin * k * s;
-					float cs = cos(th);
-					float sn = sin(th);
-					vec2 R = vec2(P.x * cs - P.y * sn, P.x * sn + P.y * cs) * (1.0 - smear * k * s);
-					vec3 x = rgb(tb, 0.5 + vec2(R.x / aspect, R.y), c);
+					vec2 R = rot(P, spin * k * (s - 0.5)) * (1.0 - smear * k * s);
+					vec3 x = rgb(tb, back(R), c);
 					float l = dot(x, vec3(0.299, 0.587, 0.114));
 					float w = (1.0 - 0.5 * s) * (1.0 + 2.0 * l * l * l * l);
 					acc += x * w;
 					ws += w;
 				}
-				col = mix(col, acc / ws, smoothstep(0.0, 0.3, k));
+				col = mix(col, acc / ws, soft * smoothstep(0.0, 0.3, k));
 			}
 			gl_FragColor = vec4(col * a, a);
 		}`;
@@ -631,8 +636,10 @@ for (const sl of document.querySelectorAll(".slider")) {
 	const u = (n) => gl.getUniformLocation(prog, n);
 	gl.uniform1i(u("t"), 0);
 	gl.uniform1i(u("tb"), 1);
-	gl.uniform1f(u("spin"), 0.04);
-	gl.uniform1f(u("smear"), 0.06);
+	gl.uniform1f(u("twist"), 0.08);
+	gl.uniform1f(u("spin"), 0.02);
+	gl.uniform1f(u("smear"), 0.03);
+	gl.uniform1f(u("soft"), 0.75);
 	gl.uniform1f(u("ca"), 0.006);
 	const uCrop = u("crop");
 	const uAspect = u("aspect");
@@ -669,8 +676,8 @@ for (const sl of document.querySelectorAll(".slider")) {
 		gl.uniform1f(uSolid, isVid ? 1 : 0);
 		gl.uniform2f(uCrop, ma > fa ? fa / ma : 1, ma > fa ? 1 : ma / fa);
 		gl.uniform1f(uAspect, fa);
-		const sw = Math.max(1, Math.round(mw / 4));
-		const sh = Math.max(1, Math.round(mh / 4));
+		const sw = Math.max(1, Math.round(mw / 2));
+		const sh = Math.max(1, Math.round(mh / 2));
 		if (small.width !== sw || small.height !== sh) {
 			small.width = sw;
 			small.height = sh;
