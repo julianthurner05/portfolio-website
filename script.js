@@ -522,11 +522,10 @@ for (const sl of document.querySelectorAll(".slider")) {
 	sl.querySelector(".next").addEventListener("click", () => go(1));
 }
 
-// Objektiv per WebGL: zum Rand hin leicht verzogen, mit Farbsaum und
-// weicher Bokeh-Unschärfe (helle Stellen blühen auf). Ein gemeinsamer
-// WebGL-Kontext rechnet, jede Figur bekommt eine Leinwand darüber, die
-// zur Mitte hin durchsichtig wird: dort bleibt das scharfe Original.
-// Läuft nach dem Karussell, damit auch die Klone eine Leinwand haben
+// Wisch-Rand per WebGL: in einem schmalen Streifen am Bildrand wird das
+// Bild radial nach außen weggewischt, mit einem Hauch Farbsaum. Ein
+// gemeinsamer WebGL-Kontext rechnet, jede Figur bekommt eine Leinwand
+// darüber. Läuft nach dem Karussell, damit auch die Klone eine haben
 (() => {
 	const frames = [...document.querySelectorAll(".work-frame")];
 	if (!frames.length) return;
@@ -543,47 +542,49 @@ for (const sl of document.querySelectorAll(".slider")) {
 	const fs = `
 		precision mediump float;
 		varying vec2 v;
-		uniform sampler2D t;
+		uniform sampler2D t;  // scharf
+		uniform sampler2D tb; // auf ein Viertel verkleinert: für den Wischer
 		uniform vec2 crop;    // object-fit: cover nachbauen
-		uniform float aspect; // Breite / Höhe der Figur
-		uniform vec2 px;      // ein Pixel in Figur-Koordinaten
-		uniform float blur;   // größter Bokeh-Radius in Pixeln (Ecken)
+		uniform float smear;  // Länge des Wischers (Anteil des Wegs zur Mitte)
 		uniform float ca;     // Farbsaum: Rot/Blau leicht anders vergrößert
-		uniform float warp;   // Verzug: Ränder gedehnt
+		uniform float solid;  // 1 = deckt ganz (Videos), 0 = innen durchsichtig
 		vec2 tc(vec2 f) { return 0.5 + (f - 0.5) * crop; }
+		vec3 rgb(sampler2D s, vec2 g, float c) {
+			vec2 d = g - 0.5;
+			return vec3(
+				texture2D(s, tc(0.5 + d * (1.0 + c))).r,
+				texture2D(s, tc(g)).g,
+				texture2D(s, tc(0.5 + d * (1.0 - c))).b
+			);
+		}
 		void main() {
 			vec2 p = v - 0.5;
-			// 0 in der Mitte, 1 in den Ecken, unabhängig vom Format
-			vec2 q = vec2(p.x * aspect, p.y) / (0.5 * sqrt(aspect * aspect + 1.0));
-			float r2 = dot(q, q);
-			float a = smoothstep(0.1, 0.3, r2);
+			// abgerundetes Rechteck: 1 an den Kantenmitten, etwas mehr in den
+			// Ecken; so ist der Streifen an allen vier Seiten gleich anteilig
+			vec2 e2 = abs(p) * 2.0;
+			float e = pow(pow(e2.x, 5.0) + pow(e2.y, 5.0), 0.2);
+			float a = max(smoothstep(0.76, 0.84, e), solid);
 			if (a <= 0.0) {
 				gl_FragColor = vec4(0.0);
 				return;
 			}
-			float r4 = r2 * r2;
-			vec2 f = 0.5 + p * (1.0 - warp * r4);
-			float rad = blur * smoothstep(0.3, 1.0, r2);
-			float c = ca * r4;
-			vec3 col = vec3(0.0);
-			float wsum = 0.0;
-			for (int i = 0; i < 24; i++) {
-				float fi = float(i);
-				float ang = fi * 2.39996;
-				float rr = sqrt((fi + 0.5) / 24.0) * rad;
-				vec2 g = f + vec2(cos(ang), sin(ang)) * rr * px;
-				vec2 d = g - 0.5;
-				vec3 s = vec3(
-					texture2D(t, tc(0.5 + d * (1.0 + c))).r,
-					texture2D(t, tc(g)).g,
-					texture2D(t, tc(0.5 + d * (1.0 - c))).b
-				);
-				float l = dot(s, vec3(0.299, 0.587, 0.114));
-				float w = 1.0 + 3.0 * l * l * l * l;
-				col += s * w;
-				wsum += w;
+			float k = smoothstep(0.8, 1.1, e);
+			float c = ca * k;
+			vec3 col = rgb(t, v, c);
+			if (k > 0.0) {
+				vec3 acc = vec3(0.0);
+				float ws = 0.0;
+				for (int i = 0; i < 24; i++) {
+					float s = float(i) / 23.0;
+					vec3 x = rgb(tb, 0.5 + p * (1.0 - smear * k * s), c);
+					float l = dot(x, vec3(0.299, 0.587, 0.114));
+					float w = (1.0 - 0.5 * s) * (1.0 + 2.0 * l * l * l * l);
+					acc += x * w;
+					ws += w;
+				}
+				col = mix(col, acc / ws, smoothstep(0.0, 0.25, k));
 			}
-			gl_FragColor = vec4(col / wsum * a, a);
+			gl_FragColor = vec4(col * a, a);
 		}`;
 	const shader = (type, src) => {
 		const sh = gl.createShader(type);
@@ -605,21 +606,29 @@ for (const sl of document.querySelectorAll(".slider")) {
 	const aLoc = gl.getAttribLocation(prog, "a");
 	gl.enableVertexAttribArray(aLoc);
 	gl.vertexAttribPointer(aLoc, 2, gl.FLOAT, false, 0, 0);
-	gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+	// Einheit 0: scharfes Bild, Einheit 1: verkleinerte Kopie
+	for (const unit of [gl.TEXTURE0, gl.TEXTURE1]) {
+		gl.activeTexture(unit);
+		gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+	}
+	const small = document.createElement("canvas");
+	const sctx = small.getContext("2d");
 	const u = (n) => gl.getUniformLocation(prog, n);
+	gl.uniform1i(u("t"), 0);
+	gl.uniform1i(u("tb"), 1);
+	gl.uniform1f(u("smear"), 0.14);
+	gl.uniform1f(u("ca"), 0.006);
 	const uCrop = u("crop");
-	const uAspect = u("aspect");
-	const uPx = u("px");
-	gl.uniform1f(u("blur"), 12);
-	gl.uniform1f(u("ca"), 0.005);
-	gl.uniform1f(u("warp"), 0.06);
+	const uSolid = u("solid");
 
-	// Leinwand in CSS-Pixeln: am Rand ist ohnehin alles weich, und so
-	// bleibt der Speicher klein
+	// Bilder: Leinwand in CSS-Pixeln, innen durchsichtig über dem scharfen
+	// Original. Videos: Leinwand deckt ganz, in der Auflösung des Videos —
+	// sonst lägen gerechnetes und laufendes Bild einen Frame versetzt
+	// übereinander und doppelten sich
 	const render = (frame) => {
 		const m = frame.querySelector("img, video");
 		const mw = m.naturalWidth || m.videoWidth;
@@ -628,29 +637,43 @@ for (const sl of document.querySelectorAll(".slider")) {
 		const W = frame.clientWidth;
 		const H = frame.clientHeight;
 		if (!W || !H) return;
-		const cv = frame.lensCanvas;
-		if (cv.width !== W || cv.height !== H) {
-			cv.width = W;
-			cv.height = H;
-		}
-		if (glc.width !== W || glc.height !== H) {
-			glc.width = W;
-			glc.height = H;
-		}
-		gl.viewport(0, 0, W, H);
 		const fa = W / H;
 		const ma = mw / mh;
+		const isVid = m.tagName === "VIDEO";
+		const k = isVid ? Math.min(devicePixelRatio || 1, Math.max(1, ma > fa ? mh / H : mw / W)) : 1;
+		const RW = Math.round(W * k);
+		const RH = Math.round(H * k);
+		const cv = frame.lensCanvas;
+		if (cv.width !== RW || cv.height !== RH) {
+			cv.width = RW;
+			cv.height = RH;
+		}
+		if (glc.width !== RW || glc.height !== RH) {
+			glc.width = RW;
+			glc.height = RH;
+		}
+		gl.viewport(0, 0, RW, RH);
+		gl.uniform1f(uSolid, isVid ? 1 : 0);
 		gl.uniform2f(uCrop, ma > fa ? fa / ma : 1, ma > fa ? 1 : ma / fa);
-		gl.uniform1f(uAspect, fa);
-		gl.uniform2f(uPx, 1 / W, 1 / H);
+		const sw = Math.max(1, Math.round(mw / 4));
+		const sh = Math.max(1, Math.round(mh / 4));
+		if (small.width !== sw || small.height !== sh) {
+			small.width = sw;
+			small.height = sh;
+		}
+		sctx.imageSmoothingQuality = "high";
 		try {
+			sctx.drawImage(m, 0, 0, sw, sh);
+			gl.activeTexture(gl.TEXTURE0);
 			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, m);
+			gl.activeTexture(gl.TEXTURE1);
+			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, small);
 		} catch {
 			return;
 		}
 		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 		const c2 = cv.getContext("2d");
-		c2.clearRect(0, 0, W, H);
+		c2.clearRect(0, 0, RW, RH);
 		c2.drawImage(glc, 0, 0);
 	};
 
@@ -696,7 +719,6 @@ for (const sl of document.querySelectorAll(".slider")) {
 		clearTimeout(resizeT);
 		resizeT = setTimeout(() => frames.forEach(render), 150);
 	});
-	document.documentElement.classList.add("lensgl");
 })();
 
 // Kinomodus: Film mit Ton auf Schwarz, alles andere blendet aus,
